@@ -1,26 +1,587 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Navigation z-index fixes */
+.navigation-header {
+  z-index: 50 !important;
+}
+
+.navigation-desktop {
+  z-index: 40 !important;
+}
+
+.navigation-mobile-overlay {
+  z-index: 55 !important;
+}
+
+.navigation-mobile-panel {
+  z-index: 60 !important;
+}
+
+.navigation-mobile-bottom {
+  z-index: 30 !important;
+}
+
+/* Static Hero Section - No Slider Functionality */
+.static-hero-section {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Ensure no slider elements can appear */
+.static-hero-section *[class*="swiper"],
+.static-hero-section *[class*="slider"],
+.static-hero-section *[class*="carousel"],
+.static-hero-section *[class*="slick"],
+.static-hero-section *[class*="glide"],
+.static-hero-section *[class*="navigation"],
+.static-hero-section *[class*="control"],
+.static-hero-section *[class*="arrow"],
+.static-hero-section *[class*="next"],
+.static-hero-section *[class*="prev"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Global slider/carousel elimination */
+*[class*="swiper"],
+*[class*="slider"],
+*[class*="carousel"],
+*[class*="slick"],
+*[class*="glide"],
+*[class*="keen"],
+*[class*="flickity"],
+*[class*="splide"],
+*[class*="owl"],
+*[id*="swiper"],
+*[id*="slider"],
+*[id*="carousel"],
+*[data-swiper],
+*[data-slider],
+*[data-carousel],
+.slick-arrow,
+.slick-next,
+.slick-prev,
+.slick-dots,
+.carousel-control,
+.carousel-control-next,
+.carousel-control-prev,
+.carousel-indicators,
+.swiper-button-next,
+.swiper-button-prev,
+.swiper-pagination,
+[class*="arrow"],
+[class*="next"],
+[class*="prev"],
+[class*="navigation"],
+[class*="control"],
+[class*="dots"],
+[class*="pagination"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Enhanced glassmorphism effects */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced Custom Glassmorphism Scrollbar */
+.custom-scrollbar {
+  /* WebKit browsers (Chrome, Safari, Edge) */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Mobile-specific scrollbar optimizations */
+@media (max-width: 768px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    min-height: 40px; /* Minimum touch target size */
+  }
+}
+
+/* Dialog overlay enhancement */
+[data-radix-dialog-overlay] {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 100 !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 101 !important;
+}
+
+/* Ensure hero buttons don't interfere with navigation */
+.hero-content-buttons {
+  position: relative;
+  z-index: 2;
+}
+
+/* Additional safety - prevent any JavaScript from showing hidden elements */
+.hero-section-clean [style*="display: block"]:not(.hero-content-only):not(.hero-content-only *),
+.hero-section-clean [style*="visibility: visible"]:not(.hero-content-only):not(.hero-content-only *),
+.hero-section-clean [style*="opacity: 1"]:not(.hero-content-only):not(.hero-content-only *) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Force override any inline styles */
+.hero-section-clean *:not(.hero-content-only):not(.hero-content-only *) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Enhanced Mobile UX with Foldable Device Support */
+@media (max-width: 768px) {
+  /* Safe area support for iOS and Android with notches */
+  .safe-area-pb {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+  
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Enhanced mobile bottom navigation with glassmorphism */
+  .mobile-nav-bottom {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Mobile menu panel with improved glassmorphism */
+  .mobile-menu-panel {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* Enhanced touch-friendly active states */
+  .touch-active {
+    background-color: rgba(220, 38, 38, 0.1);
+    transform: scale(0.96);
+    transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Improved scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* EU accessibility - minimum touch target size */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .mobile-nav-bottom {
+      border-top: 2px solid #000;
+      background: rgba(255, 255, 255, 1);
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .touch-active {
+      transform: none;
+      transition: background-color 0.1s ease;
+    }
+  }
+}
+
+/* Foldable Device Support */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  /* Samsung Galaxy Fold / Google Pixel Fold - Folded state */
+  .fold-compact {
+    max-width: 344px;
+    margin: 0 auto;
+  }
+  
+  .fold-nav {
+    padding: 0.5rem 1rem;
+  }
+  
+  .fold-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1344px) and (orientation: landscape) {
+  /* Foldable devices - Unfolded state */
+  .fold-expanded {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  
+  .fold-sidebar {
+    width: 300px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 40;
+  }
+  
+  .fold-main {
+    margin-left: 300px;
+    padding: 1rem 2rem;
+  }
+}
+
+/* Ultra-wide foldable support (Google Pixel Fold unfolded) */
+@media (min-width: 1344px) {
+  .fold-ultra {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* Responsive font scaling for EU readability standards */
+@media (max-width: 480px) {
+  /* Small phones */
+  .responsive-text-sm {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .responsive-text-base {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .responsive-text-lg {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+  
+  .responsive-text-xl {
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  /* Medium phones and small tablets */
+  .responsive-text-sm {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  
+  .responsive-text-base {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  
+  .responsive-text-lg {
+    font-size: 1.1875rem;
+    line-height: 1.6;
+  }
+  
+  .responsive-text-xl {
+    font-size: 1.375rem;
+    line-height: 1.6;
+  }
+}
+
+/* Responsive navigation without scrollbar */
+@media (min-width: 768px) {
+  .desktop-nav {
+    overflow: visible;
+  }
+
+  .desktop-nav-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  @media (min-width: 1024px) {
+    .desktop-nav-items {
+      gap: 1rem;
+    }
+  }
+}
+
+/* Hover effects for desktop */
+@media (hover: hover) {
+  .nav-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+  }
+}
+
+/* Focus styles for accessibility */
+.nav-item:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* Animation for mobile menu */
+.mobile-menu-enter {
+  transform: translateX(100%);
+}
+
+.mobile-menu-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.mobile-menu-exit {
+  transform: translateX(0);
+}
+
+.mobile-menu-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in;
+}
+
+/* Enhanced stylized car animation */
+.stylized-car-animation {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: stylizedCarDrive 4s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes stylizedCarDrive {
+  0% {
+    left: -150px;
+    transform: translateY(-50%) scale(0.8) rotate(-2deg);
+  }
+  25% {
+    left: calc(25% - 60px);
+    transform: translateY(-50%) scale(0.95) rotate(0deg);
+  }
+  50% {
+    left: calc(50% - 60px);
+    transform: translateY(-50%) scale(1.1) rotate(1deg);
+  }
+  75% {
+    left: calc(75% - 60px);
+    transform: translateY(-50%) scale(0.95) rotate(0deg);
+  }
+  100% {
+    left: calc(100% + 50px);
+    transform: translateY(-50%) scale(0.8) rotate(2deg);
+  }
+}
+
+/* Enhanced wheel animations */
+.wheel-spin {
+  animation: wheelSpin 0.3s linear infinite;
+  transform-origin: center;
+}
+
+.wheel-spin-reverse {
+  animation: wheelSpinReverse 0.4s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes wheelSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wheelSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+/* Enhanced headlight effects */
+.headlight-pulse {
+  animation: headlightPulse 2s ease-in-out infinite;
+}
+
+.headlight-glow {
+  animation: headlightGlow 2s ease-in-out infinite;
+}
+
+@keyframes headlightPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes headlightGlow {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* Enhanced speed lines animation */
+.speed-lines-enhanced {
+  animation: speedLinesEnhanced 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes speedLinesEnhanced {
+  0% {
+    opacity: 0.4;
+    transform: translateX(0) scaleX(1);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateX(-4px) scaleX(1.2);
+  }
+}
+
+/* Loading screen fade out */
+.loading-fade-out {
+  animation: fadeOut 0.8s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+    visibility: hidden;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .stylized-car-animation {
+    animation: stylizedCarDriveMobile 4s ease-in-out infinite;
+  }
+
+  @keyframes stylizedCarDriveMobile {
+    0% {
+      left: -120px;
+      transform: translateY(-50%) scale(0.6) rotate(-2deg);
+    }
+    25% {
+      left: calc(25% - 40px);
+      transform: translateY(-50%) scale(0.75) rotate(0deg);
+    }
+    50% {
+      left: calc(50% - 40px);
+      transform: translateY(-50%) scale(0.9) rotate(1deg);
+    }
+    75% {
+      left: calc(75% - 40px);
+      transform: translateY(-50%) scale(0.75) rotate(0deg);
+    }
+    100% {
+      left: calc(100% + 40px);
+      transform: translateY(-50%) scale(0.6) rotate(2deg);
+    }
+  }
 }
