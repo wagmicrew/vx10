@@ -2,12 +2,22 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { LogIn, User, Lock } from "lucide-react"
-import { GlassmorphismPopup, PopupSection } from "@/components/ui/glassmorphism-popup"
+import { LogIn, User, Lock, X } from "lucide-react"
+import { 
+  Dialog,
+  DialogContent,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Paper,
+  InputAdornment,
+  IconButton,
+  Divider,
+  Card,
+  CardContent
+} from "@mui/material"
 import { BorderBeam } from "@/components/magicui/border-beam"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
 interface LoginModalProps {
@@ -56,83 +66,252 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   }
 
   return (
-    <GlassmorphismPopup
-      isOpen={isOpen}
+    <Dialog 
+      open={isOpen} 
       onClose={onClose}
-      title="Login to VX10"
-      icon={<LogIn className="h-4 w-4" />}
-      maxWidth="md"
+      maxWidth="sm"
+      fullWidth
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: '16px',
+          overflow: 'visible',
+          background: 'transparent',
+          boxShadow: 'none',
+        },
+        '& .MuiBackdrop-root': {
+          backdropFilter: 'blur(8px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        },
+      }}
     >
-      <div className="relative">
-        {/* Enhanced flashing border animation */}
-        <div className="absolute inset-0 rounded-2xl">
-          <div className="absolute inset-0 rounded-2xl animate-pulse bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-75 blur-sm"></div>
-          <div className="absolute inset-[1px] rounded-2xl animate-ping bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 opacity-50"></div>
-          <BorderBeam className="opacity-90" />
-        </div>
-        <div className="relative z-10">
-          <PopupSection>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-white/90">
-                Email
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="pl-10 border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/40"
-                  placeholder="Enter your email"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-white/90">
-                Password
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="pl-10 border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-white/40"
-                  placeholder="Enter your password"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium"
-              disabled={isLoading}
+      <DialogContent sx={{ p: 0, overflow: 'visible' }}>
+        {/* Glassmorphism Container */}
+        <Box
+          sx={{
+            position: 'relative',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* MagicUI BorderBeam */}
+          <BorderBeam
+            size={60}
+            duration={12}
+            delay={9}
+            colorFrom="#dc2626"
+            colorTo="#ef4444"
+            className="rounded-2xl"
+          />
+          
+          {/* Header */}
+          <Box sx={{ 
+            p: 3, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  background: 'rgba(255,255,255,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                }}
+              >
+                <LogIn size={16} />
+              </Box>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  color: 'white', 
+                  fontWeight: 600,
+                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}
+              >
+                Login to VX10
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={onClose}
+              sx={{
+                width: 32,
+                height: 32,
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white',
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.2)',
+                },
+              }}
             >
-              {isLoading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
+              <X size={16} />
+            </IconButton>
+          </Box>
 
-          <div className="mt-6 space-y-3 border-t border-white/10 pt-6">
-            <h3 className="text-sm font-medium text-white/90">Test Accounts:</h3>
-            <div className="grid gap-2 text-xs text-white/70">
-              <div>Admin: admin@vx10.com / admin</div>
-              <div>Teacher: teacher@vx10.com / teacher</div>
-              <div>Student: student@vx10.com / student</div>
-            </div>
-          </div>
-          </PopupSection>
-        </div>
-      </div>
-    </GlassmorphismPopup>
+          {/* Form Content */}
+          <Box sx={{ p: 3 }}>
+            <Card
+              sx={{
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                boxShadow: 'none',
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <form onSubmit={handleSubmit}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <TextField
+                      name="email"
+                      type="email"
+                      label="Email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      disabled={isLoading}
+                      fullWidth
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <User size={16} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          color: 'white',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.2)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.4)',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(239,68,68,0.8)',
+                          },
+                          background: 'rgba(255,255,255,0.1)',
+                          borderRadius: '8px',
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          color: 'rgba(255,255,255,0.9)',
+                          '&.Mui-focused': {
+                            color: 'rgba(239,68,68,0.9)',
+                          },
+                        },
+                      }}
+                      placeholder="Enter your email"
+                    />
+
+                    <TextField
+                      name="password"
+                      type="password"
+                      label="Password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      disabled={isLoading}
+                      fullWidth
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Lock size={16} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          color: 'white',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.2)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.4)',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(239,68,68,0.8)',
+                          },
+                          background: 'rgba(255,255,255,0.1)',
+                          borderRadius: '8px',
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          color: 'rgba(255,255,255,0.9)',
+                          '&.Mui-focused': {
+                            color: 'rgba(239,68,68,0.9)',
+                          },
+                        },
+                      }}
+                      placeholder="Enter your password"
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={isLoading}
+                      fullWidth
+                      sx={{
+                        background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        py: 1.5,
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontSize: '16px',
+                        boxShadow: '0 4px 16px rgba(220, 38, 38, 0.3)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #b91c1c 0%, #dc2626 100%)',
+                          boxShadow: '0 6px 20px rgba(220, 38, 38, 0.4)',
+                        },
+                        '&:disabled': {
+                          background: 'rgba(255,255,255,0.1)',
+                          color: 'rgba(255,255,255,0.5)',
+                        },
+                      }}
+                    >
+                      {isLoading ? "Signing in..." : "Sign in"}
+                    </Button>
+                  </Box>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Test Accounts Section */}
+            <Box sx={{ mt: 3 }}>
+              <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 2 }} />
+              <Typography 
+                variant="subtitle2" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.9)', 
+                  fontWeight: 500,
+                  mb: 1.5
+                }}
+              >
+                Test Accounts:
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                  Admin: admin@vx10.com / admin
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                  Teacher: teacher@vx10.com / teacher
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                  Student: student@vx10.com / student
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </DialogContent>
+    </Dialog>
   )
 }

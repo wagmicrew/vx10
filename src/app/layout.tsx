@@ -1,9 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
-import { Navigation } from "@/components/navigation"
+import { ClientNavigation } from "@/components/client-navigation"
 import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/lib/auth/context"
+import { MUIThemeProvider } from "@/components/providers/mui-theme-provider"
 import { Toaster } from "sonner"
 
 // Use system fonts to avoid Google Fonts network issues during build
@@ -212,12 +213,14 @@ export default function RootLayout({
         <script src="https://preline.co/assets/js/hs-ui.bundle.js" async></script>
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <Navigation />
-          {children}
-          <Footer />
-          <Toaster position="top-right" richColors closeButton />
-        </AuthProvider>
+        <MUIThemeProvider>
+          <AuthProvider>
+            <ClientNavigation />
+            {children}
+            <Footer />
+            <Toaster position="top-right" richColors closeButton />
+          </AuthProvider>
+        </MUIThemeProvider>
       </body>
     </html>
   )

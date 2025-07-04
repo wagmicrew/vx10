@@ -2,10 +2,12 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Car, Clock, Award } from "lucide-react"
+import { Car, Clock, Award, MapPin, Phone, Mail } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid"
+import { EnhancedPaper, EnhancedCard, EnhancedCardContent, EnhancedCardHeader } from "@/components/ui/mui-card"
+import { Paper, Box, Typography } from "@mui/material"
 import Image from "next/image"
 
 export default function HomePage() {
@@ -74,7 +76,7 @@ export default function HomePage() {
       {/* Special Campaign Section */}
       <section className="py-16 bg-yellow-50" aria-labelledby="campaign-heading">
         <div className="container mx-auto px-6">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto">
+          <EnhancedPaper variant="glass" sx={{ p: 4, maxWidth: '4xl', mx: 'auto' }}>
             <div className="text-center mb-8">
               <h2 id="campaign-heading" className="text-3xl font-bold text-gray-800 mb-4">
                 🎯 Kampanj - Bedömningslektion för B-behörighet & Taxiförarlegitimation
@@ -111,18 +113,19 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <div className="text-center">
+              <Box sx={{ position: 'relative', borderRadius: 2, overflow: 'hidden' }}>
                 <Image
                   src="/images/bil1.jpg"
                   alt="Din Trafikskola Hässleholm BMW körskola bil för körkortsutbildning"
-                  className="rounded-lg shadow-md max-w-full h-auto"
+                  className="rounded-lg shadow-md transition-transform duration-300 hover:scale-105"
                   width={400}
                   height={300}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                  style={{ width: '100%', height: 'auto' }}
                 />
-              </div>
+              </Box>
             </div>
-          </div>
+          </EnhancedPaper>
         </div>
       </section>
 
@@ -136,100 +139,112 @@ export default function HomePage() {
             <p className="text-xl text-gray-600">Vi erbjuder professionell körkortsutbildning</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardContent className="space-y-4">
-                <Car className="w-12 h-12 text-red-600 mx-auto" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">B-körkort</h3>
-                <p className="text-gray-600">Personbil - vårt mest populära körkort</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardContent className="space-y-4">
-                <Clock className="w-12 h-12 text-red-600 mx-auto" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Taxiförarlegitimation</h3>
-                <p className="text-gray-600">Professionell yrkesutbildning</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardContent className="space-y-4">
-                <Award className="w-12 h-12 text-red-600 mx-auto" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Övriga behörigheter</h3>
-                <p className="text-gray-600">
-                  För behörigheter såsom A BE C D
-                  <br />
-                  Kontakta oss för vägledning med råd och tips
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <BentoGrid className="max-w-5xl mx-auto grid-cols-1 md:grid-cols-3 md:auto-rows-[300px]">
+            <BentoGridItem
+              title="B-körkort"
+              description="Personbil - vårt mest populära körkort för privatpersoner"
+              icon={<Car className="w-6 h-6" />}
+              imageSrc="/images/bil1.jpg"
+              imageAlt="B-körkort utbildning BMW bil"
+              className="md:col-span-1"
+            />
+            
+            <BentoGridItem
+              title="Taxiförarlegitimation"
+              description="Professionell yrkesutbildning för blivande taxiförare"
+              icon={<Clock className="w-6 h-6" />}
+              imageSrc="/images/bil2.jpg"
+              imageAlt="Taxiförarlegitimation utbildning"
+              className="md:col-span-1"
+            />
+            
+            <BentoGridItem
+              title="Övriga behörigheter"
+              description="A (Motorcykel), BE (personbil med släp), C (lastbil), D (buss). Kontakta oss för vägledning med råd och tips."
+              icon={<Award className="w-6 h-6" />}
+              className="md:col-span-1"
+            >
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+                  Behörigheter vi hjälper med:
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                  • A - Motorcykel<br/>
+                  • BE - Personbil med släp<br/>
+                  • C - Lastbil<br/>
+                  • D - Buss
+                </Typography>
+              </Box>
+            </BentoGridItem>
+          </BentoGrid>
         </div>
       </section>
 
       {/* Why Choose Us Section */}
       <section className="py-16 bg-gray-50" aria-labelledby="why-choose-heading">
         <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 id="why-choose-heading" className="text-3xl font-bold text-gray-800 mb-6">
-                Varför välja <span className="whitespace-nowrap">Din&nbsp;Trafikskola&nbsp;Hässleholm</span>?
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+          <EnhancedPaper variant="glass" sx={{ p: 4 }}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 id="why-choose-heading" className="text-3xl font-bold text-gray-800 mb-6">
+                  Varför välja <span className="whitespace-nowrap">Din&nbsp;Trafikskola&nbsp;Hässleholm</span>?
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                    <p className="text-gray-700">
+                      <strong>Erfarna instruktörer</strong> - Före detta trafikinspektör med gedigen kunskap
+                    </p>
                   </div>
-                  <p className="text-gray-700">
-                    <strong>Erfarna instruktörer</strong> - Före detta trafikinspektör med gedigen kunskap
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                    <p className="text-gray-700">
+                      <strong>Personlig utbildning</strong> - Vi anpassar undervisningen efter dina behov
+                    </p>
                   </div>
-                  <p className="text-gray-700">
-                    <strong>Personlig utbildning</strong> - Vi anpassar undervisningen efter dina behov
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                    <p className="text-gray-700">
+                      <strong>Moderna fordon</strong> - Välunderhållna bilar med senaste säkerhetsutrustningen
+                    </p>
                   </div>
-                  <p className="text-gray-700">
-                    <strong>Moderna fordon</strong> - Välunderhållna bilar med senaste säkerhetsutrustningen
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                    <p className="text-gray-700">
+                      <strong>Flexibla tider</strong> - Vi hjälper dig att hitta tider som passar ditt schema
+                    </p>
                   </div>
-                  <p className="text-gray-700">
-                    <strong>Flexibla tider</strong> - Vi hjälper dig att hitta tider som passar ditt schema
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                    <p className="text-gray-700">
+                      <strong>Centralt läge</strong> - Mitt i Hässleholm på Östergatan
+                    </p>
                   </div>
-                  <p className="text-gray-700">
-                    <strong>Centralt läge</strong> - Mitt i Hässleholm på Östergatan
-                  </p>
                 </div>
               </div>
+              <Box sx={{ position: 'relative', borderRadius: 2, overflow: 'hidden' }}>
+                <Image
+                  src="/images/bil1.jpg"
+                  alt="Din Trafikskola Hässleholm BMW körskola bilar"
+                  className="rounded-lg shadow-lg transition-transform duration-300 hover:scale-105"
+                  width={500}
+                  height={400}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </Box>
             </div>
-            <div className="text-center">
-              <Image
-                src="/images/bil1.jpg"
-                alt="Din Trafikskola Hässleholm BMW körskola bilar"
-                className="rounded-lg shadow-lg max-w-full h-auto"
-                width={500}
-                height={400}
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            </div>
-          </div>
+          </EnhancedPaper>
         </div>
       </section>
 
