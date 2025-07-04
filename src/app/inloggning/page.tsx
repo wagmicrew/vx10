@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -50,7 +51,7 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard")
       }
-    } catch (error) {
+    } catch {
       setError("Ett fel inträffade vid inloggning")
     }
 
@@ -97,7 +98,7 @@ export default function LoginPage() {
         setSuccess("Registrering lyckades! Du kan nu logga in.")
         setRegisterForm({ email: "", password: "", confirmPassword: "", fullName: "" })
       }
-    } catch (error) {
+    } catch {
       setError("Ett fel inträffade vid registrering")
     }
 
@@ -108,7 +109,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/din-logo.png" alt="Din Trafikskola Hässleholm" className="h-20 w-20 mx-auto mb-4" />
+          <Image src="/din-logo.png" alt="Din Trafikskola Hässleholm" width={80} height={80} className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900">Din Trafikskola Hässleholm</h1>
           <p className="text-gray-600">Logga in eller skapa ett konto</p>
         </div>

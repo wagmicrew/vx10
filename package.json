@@ -12,7 +12,15 @@
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
     "prisma:reset": "prisma migrate reset",
-    "setup:postgres": "powershell -ExecutionPolicy Bypass -File ./setup_postgres.ps1"
+    "setup:postgres": "powershell -ExecutionPolicy Bypass -File ./setup_postgres.ps1",
+    "setup:complete": "bash setup-vx10-complete.sh",
+    "setup:update": "bash setup-vx10-complete.sh --update",
+    "git:pull": "git fetch origin && git pull origin master",
+    "git:push": "git add . && git commit -m \"Auto-commit: $(date)\" && git push origin master",
+    "git:sync": "npm run git:pull && npm ci && npm run prisma:generate && npm run build && npm run git:push",
+    "deploy:dev": "npm ci && npm run prisma:generate && npm run prisma:push && npm run build",
+    "deploy:prod": "npm ci --production && npm run prisma:generate && npm run prisma:migrate && npm run build",
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.10.0",

@@ -8,22 +8,20 @@ import { useSession, signOut } from "next-auth/react"
 import {
   AppBar,
   Toolbar,
-  Box,
   Typography,
   IconButton,
-  Avatar,
-  Chip,
+  Menu,
+  MenuItem,
   Drawer,
   List,
   ListItem,
-  ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu as MuiMenu,
-  MenuItem,
-  Divider,
-  useTheme,
   useMediaQuery,
+  useTheme,
+  styled,
+  Box,
+} from "@mui/material"
   alpha,
   styled,
   Button as MuiButton,
@@ -193,7 +191,6 @@ export function Navigation() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // Fix hydration mismatch by mounting client-side
   useEffect(() => {

@@ -7,20 +7,18 @@ import {
   CardHeader as MuiCardHeader,
   CardActions as MuiCardActions,
   Typography,
-  Box,
   PaperProps,
   CardProps,
-  alpha,
 } from '@mui/material'
 import { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-interface EnhancedPaperProps extends PaperProps {
+interface EnhancedPaperProps extends Omit<PaperProps, 'variant'> {
   variant?: 'glass' | 'solid' | 'outlined'
   children: ReactNode
 }
 
-interface EnhancedCardProps extends CardProps {
+interface EnhancedCardProps extends Omit<CardProps, 'variant'> {
   variant?: 'glass' | 'solid' | 'outlined'
   children: ReactNode
 }

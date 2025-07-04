@@ -10,7 +10,6 @@ import {
   Button,
   Typography,
   Box,
-  Paper,
   InputAdornment,
   IconButton,
   Divider,
@@ -51,7 +50,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         // Refresh the page to update the session
         window.location.reload()
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred")
     } finally {
       setIsLoading(false)

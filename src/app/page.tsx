@@ -3,11 +3,11 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Car, Clock, Award, MapPin, Phone, Mail } from "lucide-react"
+import { Car, Clock, Award } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid"
-import { EnhancedPaper, EnhancedCard, EnhancedCardContent, EnhancedCardHeader } from "@/components/ui/mui-card"
-import { Paper, Box, Typography } from "@mui/material"
+import { EnhancedPaper } from "@/components/ui/mui-card"
+import { Box, Typography } from "@mui/material"
 import Image from "next/image"
 
 export default function HomePage() {
