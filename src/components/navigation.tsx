@@ -370,18 +370,17 @@ export function Navigation() {
               const isActive = pathname === item.url
               
               return (
-                <NavItem
-                  key={item.id}
-                  component={Link}
-                  href={item.url}
-                  className={isActive ? 'active' : ''}
-                  sx={{ textDecoration: 'none' }}
-                >
-                  <IconComponent className="nav-icon" size={20} />
-                  <Typography className="nav-text">
-                    {item.title}
-                  </Typography>
-                </NavItem>
+                <Link key={item.id} href={item.url} style={{ textDecoration: 'none' }}>
+                  <NavItem
+                    className={isActive ? 'active' : ''}
+                    sx={{ textDecoration: 'none' }}
+                  >
+                    <IconComponent className="nav-icon" size={20} />
+                    <Typography className="nav-text">
+                      {item.title}
+                    </Typography>
+                  </NavItem>
+                </Link>
               )
             })}
             
