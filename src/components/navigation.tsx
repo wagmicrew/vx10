@@ -28,7 +28,7 @@ const menuItems = [
   { id: 5, title: "Boka körning", slug: "boka-korning", url: "/boka-korning", icon: "Calendar" },
 ]
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Home,
   User,
   Car,

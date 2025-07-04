@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Phone, Mail, Clock, User } from "lucide-react"
+import Image from "next/image"
+import { Phone, Mail, Clock } from "lucide-react"
 
 export function Footer() {
   return (
@@ -14,7 +15,13 @@ export function Footer() {
               B-körkort i en trygg och modern miljö.
             </p>
             <div className="flex items-center">
-              <img src="/images/din-logo-256.png" alt="Din Trafikskola" className="h-12" />
+              <Image 
+                src="/images/din-logo-256.png" 
+                alt="Din Trafikskola" 
+                width={48}
+                height={48}
+                className="h-12 w-auto"
+              />
             </div>
           </div>
 

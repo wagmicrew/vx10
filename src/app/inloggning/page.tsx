@@ -68,10 +68,14 @@ export default function LoginPage() {
       return
     }
 
-    const { error } = await signUp(registerForm.email, registerForm.password, registerForm.fullName)
+    const { error } = await signUp({
+      email: registerForm.email,
+      password: registerForm.password,
+      fullName: registerForm.fullName
+    })
 
     if (error) {
-      setError("Fel vid registrering: " + error.message)
+      setError("Fel vid registrering: " + error)
     } else {
       setSuccess("Registrering lyckades! Kontrollera din e-post för att bekräfta kontot.")
       setRegisterForm({ email: "", password: "", confirmPassword: "", fullName: "" })

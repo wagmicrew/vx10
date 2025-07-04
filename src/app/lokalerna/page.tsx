@@ -35,7 +35,7 @@ export default function PremisesPage() {
                     priority
                   />
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                    "Här börjar din resa mot frihet - Varmt välkommen!"
+                    &ldquo;Här börjar din resa mot frihet - Varmt välkommen!&rdquo;
                   </h2>
                   <p className="text-lg text-gray-700">
                     Detta är budskapet som möter dig när du kliver in i våra moderna och välkomnande lokaler på

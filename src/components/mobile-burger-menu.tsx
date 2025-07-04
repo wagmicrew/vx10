@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -45,7 +45,7 @@ interface MobileBurgerMenuProps {
   onReturnToAdmin?: () => void
 }
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Home,
   User,
   Calendar,
@@ -77,48 +77,7 @@ export function MobileBurgerMenu({
   const [mainMenuItems, setMainMenuItems] = useState<MenuItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true)
-    } else {
-      const timer = setTimeout(() => setIsVisible(false), 300)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        // Fetch dashboard menu items
-        const dashboardResponse = await fetch(
-          `/api/menu?category=dashboard&role=${userRole === "student" ? "trainee" : userRole}`,
-        )
-        const dashboardData = await dashboardResponse.json()
-
-        // Fetch main menu items
-        const mainResponse = await fetch(
-          `/api/menu?category=main&role=${userRole === "student" ? "trainee" : userRole}`,
-        )
-        const mainData = await mainResponse.json()
-
-        setDashboardMenuItems(dashboardData.menuItems || [])
-        setMainMenuItems(mainData.menuItems || [])
-      } catch (error) {
-        console.error("Error fetching menu items:", error)
-        // Set fallback menus
-        setDashboardMenuItems(getDefaultDashboardMenu())
-        setMainMenuItems(getDefaultMainMenu())
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (isVisible) {
-      fetchMenuItems()
-    }
-  }, [isVisible, userRole])
-
-  const getDefaultDashboardMenu = (): MenuItem[] => {
+  const getDefaultDashboardMenu = useCallback((): MenuItem[] => {
     switch (userRole) {
       case "admin":
         return [
@@ -249,9 +208,9 @@ export function MobileBurgerMenu({
       default:
         return []
     }
-  }
+  }, [userRole])
 
-  const getDefaultMainMenu = (): MenuItem[] => {
+  const getDefaultMainMenu = useCallback((): MenuItem[] => {
     return [
       { id: 1, title: "Hem", slug: "hem", url: "/", icon: "Home", sort_order: 1, requires_auth: false },
       { id: 2, title: "Om oss", slug: "om-oss", url: "/om-oss", icon: "User", sort_order: 2, requires_auth: false },
@@ -274,7 +233,48 @@ export function MobileBurgerMenu({
         requires_auth: false,
       },
     ]
-  }
+  }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true)
+    } else {
+      const timer = setTimeout(() => setIsVisible(false), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        // Fetch dashboard menu items
+        const dashboardResponse = await fetch(
+          `/api/menu?category=dashboard&role=${userRole === "student" ? "trainee" : userRole}`,
+        )
+        const dashboardData = await dashboardResponse.json()
+
+        // Fetch main menu items
+        const mainResponse = await fetch(
+          `/api/menu?category=main&role=${userRole === "student" ? "trainee" : userRole}`,
+        )
+        const mainData = await mainResponse.json()
+
+        setDashboardMenuItems(dashboardData.menuItems || [])
+        setMainMenuItems(mainData.menuItems || [])
+      } catch (error) {
+        console.error("Error fetching menu items:", error)
+        // Set fallback menus
+        setDashboardMenuItems(getDefaultDashboardMenu())
+        setMainMenuItems(getDefaultMainMenu())
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (isVisible) {
+      fetchMenuItems()
+    }
+  }, [isVisible, userRole, getDefaultDashboardMenu, getDefaultMainMenu])
 
   const handleClose = () => {
     onClose()

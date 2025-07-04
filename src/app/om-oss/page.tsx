@@ -78,8 +78,8 @@ export default function AboutPage() {
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Referens och kvalitet</h3>
                   <div className="space-y-3 text-gray-700">
                     <p className="italic">
-                      "Enligt tidigare tjänstgöringsintyg från Trafikverket har vi uppfyllt arbetsuppgifter med{" "}
-                      <strong>mycket gott resultat</strong> och erhållit uppskattning från kollegor och kunder."
+                      &ldquo;Enligt tidigare tjänstgöringsintyg från Trafikverket har vi uppfyllt arbetsuppgifter med{" "}
+                      <strong>mycket gott resultat</strong> och erhållit uppskattning från kollegor och kunder.&rdquo;
                     </p>
                   </div>
                 </Card>

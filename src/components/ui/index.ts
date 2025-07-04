@@ -11,7 +11,7 @@ export { Button, buttonVariants } from "./button";
 export { Calendar } from "./calendar";
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card";
 export { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./carousel";
-export { Chart } from "./chart";
+export { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, ChartStyle } from "./chart";
 export { Checkbox } from "./checkbox";
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";
 export { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "./command";
@@ -33,7 +33,7 @@ export { Progress } from "./progress";
 export { RadioGroup, RadioGroupItem } from "./radio-group";
 // For simplicity, exporting Radio as an alias for RadioGroupItem
 export { RadioGroupItem as Radio } from "./radio-group";
-export { Resizable, ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./resizable";
+export { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./resizable";
 export { ScrollArea, ScrollBar } from "./scroll-area";
 export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "./select";
 export { Separator } from "./separator";
@@ -41,7 +41,7 @@ export { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHe
 export { Sidebar } from "./sidebar";
 export { Skeleton } from "./skeleton";
 export { Slider } from "./slider";
-export { Sonner } from "./sonner";
+export { Toaster as Sonner } from "./sonner";
 export { Switch } from "./switch";
 export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "./table";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
@@ -54,7 +54,7 @@ export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tool
 export { TimePicker } from "./time-picker";
 
 // Also export UI hooks if needed
-export { useMobile } from "./use-mobile";
+export { useIsMobile } from "./use-mobile";
 export { useToast } from "./use-toast";
 
 // Add HTML elements that may be needed (commonly used ones from the imports)

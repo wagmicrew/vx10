@@ -4,14 +4,11 @@ import "./globals.css"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { LoadingProvider } from "@/components/providers/loading-provider"
+import { AuthProvider } from "@/lib/auth/context"
 
 // Use system fonts to avoid Google Fonts network issues during build
 const inter = {
   className: 'font-sans'
-}
-
-const playfair = {
-  className: 'font-serif'
 }
 
 export const metadata: Metadata = {
@@ -212,10 +209,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
 <body className={inter.className}>
-          <LoadingProvider>
-            <Navigation />
-            {children}
-            <Footer />
+        <LoadingProvider>
+            <AuthProvider>
+              <Navigation />
+              {children}
+              <Footer />
+            </AuthProvider>
           </LoadingProvider>
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -87,7 +88,13 @@ export function DashboardHeader() {
             {/* Logo and Title */}
             <div className="flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-3">
-                <img src="/images/din-logo-small.png" alt="Din Trafikskola" className="h-8 w-auto" />
+                <Image 
+                  src="/images/din-logo-small.png" 
+                  alt="Din Trafikskola" 
+                  width={32}
+                  height={32}
+                  className="h-8 w-auto" 
+                />
                 <div className="hidden sm:block">
                   <h1 className="text-xl font-bold text-gray-900">{getDashboardTitle()}</h1>
                   <p className="text-sm text-gray-600">Din Trafikskola Hässleholm</p>

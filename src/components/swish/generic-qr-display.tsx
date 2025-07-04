@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { QrCode, RefreshCw, Copy, ExternalLink, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
@@ -19,18 +19,14 @@ export function GenericSwishQRDisplay({
   defaultMessage = "Betalning till Din Trafikskola Hässleholm" 
 }: GenericSwishQRDisplayProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
-  const [fallbackInfo, setFallbackInfo] = useState<any>(null)
+  const [fallbackInfo, setFallbackInfo] = useState<{ phoneNumber: string; amount: number; message: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [amount, setAmount] = useState(defaultAmount)
   const [message, setMessage] = useState(defaultMessage)
   const { toast } = useToast()
 
-  useEffect(() => {
-    generateQRCode()
-  }, [])
-
-  const generateQRCode = async () => {
+  const generateQRCode = useCallback(async () => {
     setLoading(true)
     setError(null)
     
@@ -61,7 +57,11 @@ export function GenericSwishQRDisplay({
     } finally {
       setLoading(false)
     }
-  }
+  }, [amount, message])
+
+  useEffect(() => {
+    generateQRCode()
+  }, [generateQRCode])
 
   const copyToClipboard = (text: string) => {
     if (!text) return
@@ -168,7 +168,13 @@ export function GenericSwishQRDisplay({
               <div className="space-y-4">
                 <div className="flex justify-center">
                   <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <img src={qrCodeUrl} alt="Swish QR Code" className="w-48 h-48 object-contain" />
+                    <Image 
+                      src={qrCodeUrl} 
+                      alt="Swish QR Code" 
+                      width={192}
+                      height={192}
+                      className="w-48 h-48 object-contain" 
+                    />
                   </div>
                 </div>
 
