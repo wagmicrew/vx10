@@ -95,7 +95,7 @@ save_project_dir() {
 prompt_project_dir() {
     local current_dir=$(get_project_dir)
     echo
-    info "Current project directory: $current_dir"
+    echo "Current project directory: $current_dir"
     read -p "Enter project directory [$current_dir]: " new_dir
     if [[ -n "$new_dir" ]]; then
         if [[ -d "$new_dir" ]]; then
@@ -121,25 +121,29 @@ github_menu() {
         echo "1) Pull latest changes"
         echo "2) Pull and build"
         echo "3) Stash and pull"
-        echo "4) View git status"
-        echo "5) View git log"
-        echo "6) Switch branch"
-        echo "7) Create new branch"
-        echo "8) View remotes"
-        echo "9) Back to main menu"
+        echo "4) Push and pull (with merge)"
+        echo "5) Force pull (reset hard)"
+        echo "6) View git status"
+        echo "7) View git log"
+        echo "8) Switch branch"
+        echo "9) Create new branch"
+        echo "10) View remotes"
+        echo "11) Back to main menu"
         echo
-        read -p "Select option [1-9]: " choice
+        read -p "Select option [1-11]: " choice
         
         case $choice in
             1) github_pull ;;
             2) github_pull_build ;;
             3) github_stash_pull ;;
-            4) github_status ;;
-            5) github_log ;;
-            6) github_switch_branch ;;
-            7) github_create_branch ;;
-            8) github_remotes ;;
-            9) break ;;
+            4) github_push_pull ;;
+            5) github_force_pull ;;
+            6) github_status ;;
+            7) github_log ;;
+            8) github_switch_branch ;;
+            9) github_create_branch ;;
+            10) github_remotes ;;
+            11) break ;;
             *) error "Invalid option. Please try again." ;;
         esac
     done
@@ -159,6 +163,12 @@ github_pull() {
     local project_dir=$(prompt_project_dir)
     log "Pulling latest changes..."
     
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     execute_with_user "cd '$project_dir' && git fetch origin && git pull origin \$(git branch --show-current)"
     success "Successfully pulled latest changes"
     read -p "Press Enter to continue..."
@@ -167,6 +177,12 @@ github_pull() {
 github_pull_build() {
     local project_dir=$(prompt_project_dir)
     log "Pulling latest changes and building..."
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
     
     execute_with_user "cd '$project_dir' && git fetch origin && git pull origin \$(git branch --show-current)"
     
@@ -191,6 +207,12 @@ github_stash_pull() {
     local project_dir=$(prompt_project_dir)
     log "Stashing changes and pulling..."
     
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     execute_with_user "cd '$project_dir' && git stash push -m 'Auto-stash before pull \$(date)' && git fetch origin && git pull origin \$(git branch --show-current)"
     
     success "Successfully stashed and pulled"
@@ -198,8 +220,90 @@ github_stash_pull() {
     read -p "Press Enter to continue..."
 }
 
+# New function for push and pull with merge handling
+github_push_pull() {
+    local project_dir=$(prompt_project_dir)
+    log "Checking for local changes and syncing with remote..."
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    execute_with_user "cd '$project_dir' && git fetch origin"
+    
+    # Check if there are local changes
+    local has_changes=$(execute_with_user "cd '$project_dir' && git status --porcelain")
+    local current_branch=$(execute_with_user "cd '$project_dir' && git branch --show-current")
+    
+    if [[ -n "$has_changes" ]]; then
+        log "Local changes detected. Committing changes..."
+        read -p "Enter commit message: " commit_msg
+        if [[ -z "$commit_msg" ]]; then
+            commit_msg="Auto-commit: $(date)"
+        fi
+        execute_with_user "cd '$project_dir' && git add . && git commit -m '$commit_msg'"
+    fi
+    
+    # Check if remote has changes
+    local remote_changes=$(execute_with_user "cd '$project_dir' && git rev-list HEAD..origin/$current_branch --count")
+    
+    if [[ "$remote_changes" -gt 0 ]]; then
+        log "Remote changes detected. Attempting to pull with merge..."
+        if ! execute_with_user "cd '$project_dir' && git pull origin $current_branch"; then
+            error "Merge conflicts detected. Please resolve manually."
+            read -p "Press Enter to continue..."
+            return 1
+        fi
+    fi
+    
+    # Push if there are local commits
+    local local_changes=$(execute_with_user "cd '$project_dir' && git rev-list origin/$current_branch..HEAD --count")
+    
+    if [[ "$local_changes" -gt 0 ]] || [[ -n "$has_changes" ]]; then
+        log "Pushing local changes..."
+        execute_with_user "cd '$project_dir' && git push origin $current_branch"
+    fi
+    
+    success "Successfully synchronized with remote repository"
+    read -p "Press Enter to continue..."
+}
+
+# New function for force pull (reset hard)
+github_force_pull() {
+    local project_dir=$(prompt_project_dir)
+    warning "This will discard all local changes and force pull from remote!"
+    read -p "Are you sure? (y/N): " confirm
+    
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        if [[ ! -d "$project_dir" ]]; then
+            error "Directory does not exist: $project_dir"
+            read -p "Press Enter to continue..."
+            return 1
+        fi
+        
+        log "Force pulling from remote (discarding local changes)..."
+        local current_branch=$(execute_with_user "cd '$project_dir' && git branch --show-current")
+        
+        execute_with_user "cd '$project_dir' && git fetch origin && git reset --hard origin/$current_branch"
+        
+        success "Successfully force pulled from remote"
+    else
+        info "Operation cancelled"
+    fi
+    read -p "Press Enter to continue..."
+}
+
 github_status() {
     local project_dir=$(prompt_project_dir)
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     cd "$project_dir"
     git status
     read -p "Press Enter to continue..."
@@ -207,6 +311,13 @@ github_status() {
 
 github_log() {
     local project_dir=$(prompt_project_dir)
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     cd "$project_dir"
     git log --oneline -10
     read -p "Press Enter to continue..."
@@ -214,6 +325,13 @@ github_log() {
 
 github_switch_branch() {
     local project_dir=$(prompt_project_dir)
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     cd "$project_dir"
     
     echo "Available branches:"
@@ -230,6 +348,13 @@ github_switch_branch() {
 
 github_create_branch() {
     local project_dir=$(prompt_project_dir)
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     cd "$project_dir"
     
     read -p "Enter new branch name: " branch_name
@@ -242,6 +367,13 @@ github_create_branch() {
 
 github_remotes() {
     local project_dir=$(prompt_project_dir)
+    
+    if [[ ! -d "$project_dir" ]]; then
+        error "Directory does not exist: $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
     cd "$project_dir"
     git remote -v
     read -p "Press Enter to continue..."
