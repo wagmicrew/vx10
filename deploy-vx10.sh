@@ -66,18 +66,23 @@ prompt_input() {
     local var_name="$3"
     
     if [[ -n "$default_value" ]]; then
-        read -p "$prompt_text [$default_value]: " input
+        echo -n "$prompt_text [$default_value]: "
+        read input
         if [[ -z "$input" ]]; then
             input="$default_value"
         fi
     else
-        read -p "$prompt_text: " input
+        echo -n "$prompt_text: "
+        read input
         while [[ -z "$input" ]]; do
             echo "This field is required."
-            read -p "$prompt_text: " input
+            echo -n "$prompt_text: "
+            read input
         done
     fi
     
+    # Clean the input of any special characters
+    input=$(echo "$input" | tr -d '\n\r\t' | sed 's/[[:space:]]*$//')
     eval "$var_name='$input'"
 }
 
