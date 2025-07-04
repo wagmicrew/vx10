@@ -3,6 +3,7 @@
 import { ReactNode } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BorderBeam } from "@/components/magicui/border-beam"
 
 interface GlassmorphismPopupProps {
   isOpen: boolean
@@ -45,6 +46,15 @@ export function GlassmorphismPopup({
           maxWidthClasses[maxWidth]
         )}
       >
+        {/* MagicUI BorderBeam */}
+        <BorderBeam
+          size={60}
+          duration={12}
+          delay={9}
+          colorFrom="#dc2626"
+          colorTo="#ef4444"
+          className="rounded-2xl"
+        />
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">

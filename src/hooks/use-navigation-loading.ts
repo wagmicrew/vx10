@@ -1,43 +1,45 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useLoading } from '@/components/providers/loading-provider'
 
 export function useNavigationLoading() {
-  const { showLoading, hideLoading } = useLoading()
+  const [isNavigating, setIsNavigating] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
-    // Show loading when pathname changes (for client-side navigation)
-    showLoading()
+    // Set navigating state when pathname changes
+    setIsNavigating(true)
     
-    // Hide loading after a short delay to allow page content to load
+    // Clear navigating state after a short delay
     const timer = setTimeout(() => {
-      hideLoading()
-    }, 800)
+      setIsNavigating(false)
+    }, 300)
 
     return () => clearTimeout(timer)
-  }, [pathname, showLoading, hideLoading])
+  }, [pathname])
 
-  return { showLoading, hideLoading }
+  return { isNavigating }
 }
 
-// Alternative hook for manual control
+// Simple loading state hook for manual control
 export function useManualLoading() {
-  const { showLoading, hideLoading, isLoading } = useLoading()
+  const [isLoading, setIsLoading] = useState(false)
+  
+  const startLoading = () => setIsLoading(true)
+  const stopLoading = () => setIsLoading(false)
   
   const triggerLoading = (duration: number = 1500) => {
-    showLoading()
+    setIsLoading(true)
     setTimeout(() => {
-      hideLoading()
+      setIsLoading(false)
     }, duration)
   }
 
   return { 
-    showLoading, 
-    hideLoading, 
-    isLoading, 
+    isLoading,
+    startLoading, 
+    stopLoading, 
     triggerLoading 
   }
 }

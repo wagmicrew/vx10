@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth/context"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +19,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const { signIn, signUp } = useAuth()
   const router = useRouter()
 
   const [loginForm, setLoginForm] = useState({
@@ -39,12 +38,20 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await signIn(loginForm.email, loginForm.password)
+    try {
+      const result = await signIn("credentials", {
+        email: loginForm.email,
+        password: loginForm.password,
+        redirect: false,
+      })
 
-    if (error) {
-      setError("Fel e-postadress eller lösenord")
-    } else {
-      router.push("/dashboard")
+      if (result?.error) {
+        setError("Fel e-postadress eller lösenord")
+      } else {
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      setError("Ett fel inträffade vid inloggning")
     }
 
     setLoading(false)
@@ -68,17 +75,30 @@ export default function LoginPage() {
       return
     }
 
-    const { error } = await signUp({
-      email: registerForm.email,
-      password: registerForm.password,
-      fullName: registerForm.fullName
-    })
+    try {
+      // Call your registration API endpoint
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: registerForm.email,
+          password: registerForm.password,
+          name: registerForm.fullName
+        }),
+      })
 
-    if (error) {
-      setError("Fel vid registrering: " + error)
-    } else {
-      setSuccess("Registrering lyckades! Kontrollera din e-post för att bekräfta kontot.")
-      setRegisterForm({ email: "", password: "", confirmPassword: "", fullName: "" })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError("Fel vid registrering: " + (data.error || 'Okänt fel'))
+      } else {
+        setSuccess("Registrering lyckades! Du kan nu logga in.")
+        setRegisterForm({ email: "", password: "", confirmPassword: "", fullName: "" })
+      }
+    } catch (error) {
+      setError("Ett fel inträffade vid registrering")
     }
 
     setLoading(false)
