@@ -4,8 +4,10 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { ContactForm } from "@/components/contact-form"
+import { LoginModal } from "@/components/auth/login-modal"
 import {
   MapPin,
   Phone,
@@ -17,7 +19,19 @@ import {
   Home,
   Menu,
   X,
+  LogIn,
+  LogOut,
+  Settings,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 // Static menu items (no database dependency)
 const menuItems = [
@@ -39,8 +53,28 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export function Navigation() {
   const [showContactForm, setShowContactForm] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { data: session, status } = useSession()
+
+  const getDashboardUrl = () => {
+    if (!session?.user?.role) return "/"
+    switch (session.user.role) {
+      case "ADMIN":
+        return "/admin"
+      case "TEACHER":
+        return "/teacher"
+      case "STUDENT":
+        return "/student"
+      default:
+        return "/"
+    }
+  }
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/" })
+  }
 
   return (
     <>
@@ -143,6 +177,67 @@ export function Navigation() {
                 <Mail className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span>Kontakt</span>
               </Button>
+              
+              {/* Authentication */}
+              {status === "loading" ? (
+                <div className="px-4 py-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+                </div>
+              ) : session ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-red-500 text-white">
+                          {session.user.name?.[0] || session.user.email?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {session.user.name || "User"}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {session.user.email}
+                        </p>
+                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                          {session.user.role}
+                        </span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={getDashboardUrl()} className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/setup" className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Setup</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logga ut</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowLoginModal(true)}
+                  className="flex items-center space-x-2 px-4 lg:px-6 py-3 rounded-lg font-medium transition-all duration-200 whitespace-nowrap text-sm lg:text-base text-gray-700 hover:text-red-600 hover:bg-red-50"
+                >
+                  <LogIn className="w-4 h-4 lg:w-5 lg:h-5" />
+                  <span>Logga in</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -253,6 +348,9 @@ export function Navigation() {
 
       {/* Contact Form Modal */}
       <ContactForm isOpen={showContactForm} onClose={() => setShowContactForm(false)} />
+      
+      {/* Login Modal */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </>
   )
 }

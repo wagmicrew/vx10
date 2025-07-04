@@ -131,10 +131,10 @@ export function MainNav({ className, userRole = "pupil" }: MainNavProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-x-3 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200",
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-500"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
             )}
           >
             <Icon className="h-4 w-4" />

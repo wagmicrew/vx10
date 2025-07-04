@@ -1,0 +1,293 @@
+@import "tailwindcss";
+
+/* Preline UI */
+@source "./node_modules/preline/dist/*.js";
+@import "./node_modules/preline/variants.css";
+
+/* Plugins */
+@plugin "@tailwindcss/forms";
+
+@theme {
+  /* Preline UI Red/Black Theme */
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-red-950: #450a0a;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  /* Primary brand colors (Red theme) */
+  --color-primary-50: var(--color-red-50);
+  --color-primary-100: var(--color-red-100);
+  --color-primary-200: var(--color-red-200);
+  --color-primary-300: var(--color-red-300);
+  --color-primary-400: var(--color-red-400);
+  --color-primary-500: var(--color-red-500);
+  --color-primary-600: var(--color-red-600);
+  --color-primary-700: var(--color-red-700);
+  --color-primary-800: var(--color-red-800);
+  --color-primary-900: var(--color-red-900);
+  --color-primary-950: var(--color-red-950);
+
+  /* Font configuration */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "Menlo", "Monaco", "Cascadia Code", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro", "Fira Code", "Droid Sans Mono", "Courier New", monospace;
+
+  /* Custom spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+  --spacing-144: 36rem;
+
+  /* Custom border radius */
+  --radius-4xl: 2rem;
+
+  /* Container configuration */
+  --breakpoint-2xl: 1400px;
+}
+
+@layer theme {
+  /* Dark mode configuration */
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* Custom colors using CSS custom properties */
+  :root {
+    --color-border: 214 32% 91%;
+    --color-input: 214 32% 91%;
+    --color-ring: 224 71% 4%;
+    --color-background: 0 0% 100%;
+    --color-foreground: 224 71% 4%;
+    --color-primary: 220 100% 50%;
+    --color-primary-foreground: 210 40% 98%;
+    --color-secondary: 220 14% 96%;
+    --color-secondary-foreground: 220 100% 10%;
+    --color-destructive: 0 100% 50%;
+    --color-destructive-foreground: 210 40% 98%;
+    --color-muted: 220 14% 96%;
+    --color-muted-foreground: 220 8% 46%;
+    --color-accent: 220 14% 96%;
+    --color-accent-foreground: 220 9% 9%;
+    --color-popover: 0 0% 100%;
+    --color-popover-foreground: 224 71% 4%;
+    --color-card: 0 0% 100%;
+    --color-card-foreground: 224 71% 4%;
+    --color-chart-1: 12 76% 61%;
+    --color-chart-2: 173 58% 39%;
+    --color-chart-3: 197 37% 24%;
+    --color-chart-4: 43 74% 66%;
+    --color-chart-5: 27 87% 67%;
+    
+    /* VX7 brand colors */
+    --color-brand-red: 0 69% 51%;
+    --color-brand-red-dark: 0 65% 42%;
+    --color-brand-red-light: 0 73% 60%;
+    --color-brand-black: 0 0% 0%;
+    --color-brand-black-light: 215 28% 17%;
+    --color-brand-white: 0 0% 100%;
+    --color-brand-gray-light: 210 25% 98%;
+    --color-brand-gray-medium: 215 14% 52%;
+    --color-brand-gray-dark: 215 25% 27%;
+    
+    /* Border radius variables */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --color-border: 215 27% 17%;
+    --color-input: 215 27% 17%;
+    --color-ring: 216 12% 84%;
+    --color-background: 224 71% 4%;
+    --color-foreground: 210 40% 98%;
+    --color-primary: 210 40% 98%;
+    --color-primary-foreground: 220 100% 10%;
+    --color-secondary: 215 27% 17%;
+    --color-secondary-foreground: 210 40% 98%;
+    --color-destructive: 0 63% 31%;
+    --color-destructive-foreground: 210 40% 98%;
+    --color-muted: 215 27% 17%;
+    --color-muted-foreground: 217 10% 65%;
+    --color-accent: 215 27% 17%;
+    --color-accent-foreground: 210 40% 98%;
+    --color-popover: 224 71% 4%;
+    --color-popover-foreground: 210 40% 98%;
+    --color-card: 224 71% 4%;
+    --color-card-foreground: 210 40% 98%;
+  }
+}
+
+@layer utilities {
+  /* Custom color utilities */
+  .border-border { border-color: hsl(var(--color-border)); }
+  .bg-background { background-color: hsl(var(--color-background)); }
+  .text-foreground { color: hsl(var(--color-foreground)); }
+  .bg-primary { background-color: hsl(var(--color-primary)); }
+  .text-primary { color: hsl(var(--color-primary)); }
+  .text-primary-foreground { color: hsl(var(--color-primary-foreground)); }
+  .bg-secondary { background-color: hsl(var(--color-secondary)); }
+  .text-secondary-foreground { color: hsl(var(--color-secondary-foreground)); }
+  .bg-destructive { background-color: hsl(var(--color-destructive)); }
+  .text-destructive-foreground { color: hsl(var(--color-destructive-foreground)); }
+  .bg-muted { background-color: hsl(var(--color-muted)); }
+  .text-muted-foreground { color: hsl(var(--color-muted-foreground)); }
+  .bg-accent { background-color: hsl(var(--color-accent)); }
+  .text-accent-foreground { color: hsl(var(--color-accent-foreground)); }
+  .bg-popover { background-color: hsl(var(--color-popover)); }
+  .text-popover-foreground { color: hsl(var(--color-popover-foreground)); }
+  .bg-card { background-color: hsl(var(--color-card)); }
+  .text-card-foreground { color: hsl(var(--color-card-foreground)); }
+  .ring-ring { --tw-ring-color: hsl(var(--color-ring)); }
+  .bg-input { background-color: hsl(var(--color-input)); }
+  
+  /* Brand colors */
+  .bg-brand-red { background-color: hsl(var(--color-brand-red)); }
+  .text-brand-red { color: hsl(var(--color-brand-red)); }
+  .bg-brand-black { background-color: hsl(var(--color-brand-black)); }
+  .text-brand-white { color: hsl(var(--color-brand-white)); }
+
+  /* Chart colors */
+  .fill-chart-1 { fill: hsl(var(--color-chart-1)); }
+  .fill-chart-2 { fill: hsl(var(--color-chart-2)); }
+  .fill-chart-3 { fill: hsl(var(--color-chart-3)); }
+  .fill-chart-4 { fill: hsl(var(--color-chart-4)); }
+  .fill-chart-5 { fill: hsl(var(--color-chart-5)); }
+
+  /* Border radius utilities */
+  .rounded-lg { border-radius: var(--radius); }
+  .rounded-md { border-radius: calc(var(--radius) - 2px); }
+  .rounded-sm { border-radius: calc(var(--radius) - 4px); }
+
+  /* Font family utilities */
+  .font-sans { font-family: Inter, ui-sans-serif, system-ui; }
+  .font-serif { font-family: ui-serif, Georgia; }
+  .font-mono { font-family: ui-monospace, SFMono-Regular; }
+  
+  /* Custom spacing utilities */
+  .space-18 { gap: 4.5rem; }
+  .p-18 { padding: 4.5rem; }
+  .m-18 { margin: 4.5rem; }
+  .w-88 { width: 22rem; }
+  .h-88 { height: 22rem; }
+  .w-128 { width: 32rem; }
+  .h-128 { height: 32rem; }
+  .w-144 { width: 36rem; }
+  .h-144 { height: 36rem; }
+  
+  /* Backdrop blur utilities */
+  .backdrop-blur-xs { backdrop-filter: blur(2px); }
+  
+  /* Box shadow utilities */
+  .shadow-glass { box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); }
+  .shadow-glass-inset { box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05); }
+  .shadow-neumorphism { box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff; }
+  .shadow-neumorphism-inset { box-shadow: inset 20px 20px 60px #bebebe, inset -20px -20px 60px #ffffff; }
+  .shadow-red-glow { box-shadow: 0 0 20px rgba(220, 38, 38, 0.3); }
+  .shadow-red-glow-lg { box-shadow: 0 0 40px rgba(220, 38, 38, 0.4); }
+  
+  /* Background image utilities */
+  .bg-gradient-radial { background-image: radial-gradient(var(--tw-gradient-stops)); }
+  .bg-gradient-conic { background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops)); }
+  .bg-red-gradient { background-image: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+  .bg-black-gradient { background-image: linear-gradient(135deg, #000000 0%, #1f2937 100%); }
+  .bg-glass-gradient { background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%); }
+  
+  /* Scale utilities */
+  .scale-102 { transform: scale(1.02); }
+  .scale-103 { transform: scale(1.03); }
+  
+  /* Blur utilities */
+  .blur-xs { filter: blur(2px); }
+  
+  /* Custom font sizes */
+  .text-2xs { font-size: 0.625rem; line-height: 0.75rem; }
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+/* VX7 custom animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 20px rgba(116, 185, 255, 0.5); }
+  100% { box-shadow: 0 0 30px rgba(116, 185, 255, 0.8); }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  0% { opacity: 0; transform: translateX(-50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  0% { opacity: 0; transform: translateX(50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-accordion-down { animation: accordion-down 0.2s ease-out; }
+  .animate-accordion-up { animation: accordion-up 0.2s ease-out; }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-glow { animation: glow 2s ease-in-out infinite alternate; }
+  .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+  .animate-slideInLeft { animation: slideInLeft 0.5s ease-out; }
+  .animate-slideInRight { animation: slideInRight 0.5s ease-out; }
+  .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+}
+
+/* Adds pointer cursor to buttons */
+@layer base {
+  * {
+    border-color: hsl(var(--color-border));
+  }
+  body {
+    background-color: hsl(var(--color-background));
+    color: hsl(var(--color-foreground));
+  }
+  
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Defaults hover styles on all devices */
+@custom-variant hover (&:hover);

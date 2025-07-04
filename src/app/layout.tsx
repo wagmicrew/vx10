@@ -3,8 +3,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { LoadingProvider } from "@/components/providers/loading-provider"
 import { AuthProvider } from "@/lib/auth/context"
+import { Toaster } from "sonner"
 
 // Use system fonts to avoid Google Fonts network issues during build
 const inter = {
@@ -207,15 +207,17 @@ export default function RootLayout({
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* Preline UI Script */}
+        <script src="https://preline.co/assets/js/hs-ui.bundle.js" async></script>
       </head>
-<body className={inter.className}>
-        <LoadingProvider>
-            <AuthProvider>
-              <Navigation />
-              {children}
-              <Footer />
-            </AuthProvider>
-          </LoadingProvider>
+      <body className={inter.className}>
+        <AuthProvider>
+          <Navigation />
+          {children}
+          <Footer />
+          <Toaster position="top-right" richColors closeButton />
+        </AuthProvider>
       </body>
     </html>
   )

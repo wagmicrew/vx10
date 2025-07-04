@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/preline-button"
+import { Input } from "@/components/ui/preline-input"
+import { Alert, AlertDescription } from "@/components/ui/preline-alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Mail, Phone } from "lucide-react"
 
