@@ -10,21 +10,19 @@ import {
   Toolbar,
   Typography,
   IconButton,
-  Menu,
+  Menu as MuiMenu,
   MenuItem,
   Drawer,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  useMediaQuery,
-  useTheme,
+  ListItemButton,
   styled,
   Box,
-} from "@mui/material"
-  alpha,
-  styled,
-  Button as MuiButton,
+  Avatar,
+  Chip,
+  Divider,
   Paper,
 } from "@mui/material"
 import { ContactForm } from "@/components/contact-form"
@@ -190,7 +188,6 @@ export function Navigation() {
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const { data: session, status } = useSession()
-  const theme = useTheme()
 
   // Fix hydration mismatch by mounting client-side
   useEffect(() => {
