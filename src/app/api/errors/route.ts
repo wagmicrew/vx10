@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Import our logger (server-side only)
-let logger: any;
-try {
-  logger = require('../../../../utils/logger').logger;
-} catch (error) {
-  console.error('Failed to load logger in API route:', error);
+// Logger interface type
+interface Logger {
+  error: (message: string, data?: Record<string, unknown>) => void;
+  warn: (message: string, data?: Record<string, unknown>) => void;
+}
+
+// Function to get logger dynamically
+async function getLogger(): Promise<Logger | null> {
+  try {
+    // Use dynamic import for ES modules compatibility
+    const loggerModule = await import('../../../../utils/logger');
+    return loggerModule.logger;
+  } catch (error) {
+    console.error('Failed to load logger in API route:', error);
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -20,6 +30,9 @@ export async function POST(request: NextRequest) {
       referer: request.headers.get('referer') || 'unknown',
       timestamp: new Date().toISOString()
     };
+
+    // Get logger instance
+    const logger = await getLogger();
 
     // Log based on error type
     if (logger) {
@@ -58,6 +71,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Failed to process error report:', error);
     
+    const logger = await getLogger();
     if (logger) {
       logger.error('Error processing error report', {
         error: error instanceof Error ? error.message : String(error),
@@ -78,6 +92,7 @@ export async function GET(request: NextRequest) {
   const check = searchParams.get('check');
 
   if (check === 'health') {
+    const logger = await getLogger();
     return NextResponse.json({
       status: 'ok',
       timestamp: new Date().toISOString(),

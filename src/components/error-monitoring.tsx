@@ -164,11 +164,11 @@ export const NetworkMonitor: React.FC = () => {
 
     // Monitor resource loading errors
     const handleResourceError = (event: ErrorEvent) => {
-      const target = event.target as HTMLElement;
+      const target = event.target as HTMLElement & { src?: string; href?: string };
       if (target?.tagName) {
         console.error('Resource failed to load:', {
           tag: target.tagName,
-          src: (target as any).src || (target as any).href,
+          src: target.src || target.href,
           error: event.error
         });
       }
@@ -199,7 +199,7 @@ export const PerformanceMonitor: React.FC = () => {
     // Monitor Core Web Vitals
     if (typeof window !== 'undefined' && 'web-vital' in window) {
       import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
-        const vitalsHandler = (metric: any) => {
+        const vitalsHandler = (metric: { name: string; value: number }) => {
           console.log('Web Vital:', metric);
           
           // Report poor scores

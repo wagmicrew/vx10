@@ -53,6 +53,38 @@ export { Toggle, toggleVariants } from "./toggle";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 export { TimePicker } from "./time-picker";
 
+// Enhanced MUI components with glassmorphism
+export {
+  EnhancedButton,
+  EnhancedIconButton,
+  EnhancedFab,
+  EnhancedButtonGroup,
+  LoadingButton
+} from "./mui-button";
+
+export {
+  EnhancedTextField,
+  PasswordField,
+  EnhancedAutocomplete,
+  SearchField
+} from "./mui-input";
+
+export {
+  EnhancedPaper,
+  EnhancedCard,
+  EnhancedCardContent,
+  EnhancedCardHeader,
+  EnhancedCardActions
+} from "./mui-card";
+
+// Glassmorphism and MagicUI components
+export {
+  GlassmorphismPopup,
+  PopupSection,
+  DetailRow,
+  StatusBadge
+} from "./glassmorphism-popup";
+
 // Also export UI hooks if needed
 export { useIsMobile } from "./use-mobile";
 export { useToast } from "./use-toast";
