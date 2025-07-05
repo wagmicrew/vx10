@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/lib/auth/context"
 import { MUIThemeProvider } from "@/components/providers/mui-theme-provider"
 import { Toaster } from "sonner"
+import VX10ErrorBoundary, { NetworkMonitor, PerformanceMonitor } from "@/components/error-monitoring"
 
 // Use system fonts to avoid Google Fonts network issues during build
 const inter = {
@@ -214,12 +215,16 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <MUIThemeProvider>
-          <AuthProvider>
-            <ClientNavigation />
-            {children}
-            <Footer />
-            <Toaster position="top-right" richColors closeButton />
-          </AuthProvider>
+          <VX10ErrorBoundary>
+            <AuthProvider>
+              <NetworkMonitor />
+              <PerformanceMonitor />
+              <ClientNavigation />
+              {children}
+              <Footer />
+              <Toaster position="top-right" richColors closeButton />
+            </AuthProvider>
+          </VX10ErrorBoundary>
         </MUIThemeProvider>
       </body>
     </html>

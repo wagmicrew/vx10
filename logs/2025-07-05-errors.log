@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-07-05T08:42:18.226Z",
+  "level": "ERROR",
+  "message": "Corrupted chunk files detected",
+  "pid": 34024,
+  "memory": {
+    "rss": 35143680,
+    "heapTotal": 5763072,
+    "heapUsed": 4815728,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "corruptedFiles": [
+    "app",
+    "pages"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:26.732Z",
+  "level": "ERROR",
+  "message": "Corrupted chunk files detected",
+  "pid": 57580,
+  "memory": {
+    "rss": 35069952,
+    "heapTotal": 5763072,
+    "heapUsed": 4814528,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "corruptedFiles": [
+    "app",
+    "pages"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:28.056Z",
+  "level": "ERROR",
+  "message": "❌ Clear Next.js cache failed",
+  "pid": 57580,
+  "memory": {
+    "rss": 36204544,
+    "heapTotal": 5763072,
+    "heapUsed": 5426408,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "error": "Command failed: rm -rf .next"
+}
+{
+  "timestamp": "2025-07-05T08:45:01.067Z",
+  "level": "ERROR",
+  "message": "Corrupted chunk files detected",
+  "pid": 41300,
+  "memory": {
+    "rss": 35028992,
+    "heapTotal": 5763072,
+    "heapUsed": 4814528,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "corruptedFiles": [
+    "app",
+    "pages"
+  ]
+}

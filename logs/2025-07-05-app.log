@@ -1,0 +1,1133 @@
+{
+  "timestamp": "2025-07-05T08:42:18.188Z",
+  "level": "INFO",
+  "message": "🔍 Starting VX10 build diagnostics...",
+  "pid": 34024,
+  "memory": {
+    "rss": 34516992,
+    "heapTotal": 5763072,
+    "heapUsed": 4509152,
+    "external": 1562360,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.202Z",
+  "level": "INFO",
+  "message": "📦 Checking build integrity...",
+  "pid": 34024,
+  "memory": {
+    "rss": 34754560,
+    "heapTotal": 5763072,
+    "heapUsed": 4653752,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.207Z",
+  "level": "INFO",
+  "message": "Checking build integrity...",
+  "pid": 34024,
+  "memory": {
+    "rss": 34762752,
+    "heapTotal": 5763072,
+    "heapUsed": 4663592,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.213Z",
+  "level": "INFO",
+  "message": "Build chunks found",
+  "pid": 34024,
+  "memory": {
+    "rss": 34779136,
+    "heapTotal": 5763072,
+    "heapUsed": 4684248,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "chunksCount": 25,
+  "chunks": [
+    "108-c3bf39388465b621.js",
+    "110-d50ad7a608e65ac5.js",
+    "111-b9f33fcff9bc5080.js",
+    "129-871043e8e1c6e525.js",
+    "197.d6ba3253de721430.js",
+    "296-4256bf31e0ee5e31.js",
+    "3-ce16837e18cf1a8a.js",
+    "341.a4c9e4b8dad9832e.js",
+    "469-f9d9c7ff3328235f.js",
+    "472.2c08b965bd9148e2.js"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:18.226Z",
+  "level": "ERROR",
+  "message": "Corrupted chunk files detected",
+  "pid": 34024,
+  "memory": {
+    "rss": 35143680,
+    "heapTotal": 5763072,
+    "heapUsed": 4815728,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "corruptedFiles": [
+    "app",
+    "pages"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:18.229Z",
+  "level": "INFO",
+  "message": "🏥 Checking server health...",
+  "pid": 34024,
+  "memory": {
+    "rss": 35176448,
+    "heapTotal": 5763072,
+    "heapUsed": 4836864,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.230Z",
+  "level": "INFO",
+  "message": "Checking server health...",
+  "pid": 34024,
+  "memory": {
+    "rss": 35188736,
+    "heapTotal": 5763072,
+    "heapUsed": 4844560,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.231Z",
+  "level": "INFO",
+  "message": "Server health status",
+  "pid": 34024,
+  "memory": {
+    "rss": "34MB",
+    "heapTotal": "5MB",
+    "heapUsed": "5MB",
+    "external": "2MB"
+  },
+  "cpu": {
+    "user": 62000,
+    "system": 46000
+  },
+  "uptime": "0s",
+  "version": "v22.12.0",
+  "platform": "win32",
+  "arch": "x64"
+}
+{
+  "timestamp": "2025-07-05T08:42:18.233Z",
+  "level": "INFO",
+  "message": "🌍 Checking environment configuration...",
+  "pid": 34024,
+  "memory": {
+    "rss": 35287040,
+    "heapTotal": 5763072,
+    "heapUsed": 4922464,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.234Z",
+  "level": "INFO",
+  "message": "Environment check results",
+  "pid": 34024,
+  "memory": {
+    "rss": 35385344,
+    "heapTotal": 5763072,
+    "heapUsed": 4940248,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "nodeVersion": "v22.12.0",
+  "nodeEnv": "not set",
+  "hasEnvFile": false,
+  "hasEnvExample": false,
+  "envVars": {
+    "DATABASE_URL": "❌ Missing",
+    "NEXTAUTH_SECRET": "❌ Missing",
+    "NEXTAUTH_URL": "❌ Missing",
+    "JWT_SECRET": "❌ Missing"
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.235Z",
+  "level": "WARN",
+  "message": "Missing critical environment variables",
+  "pid": 34024,
+  "memory": {
+    "rss": 35700736,
+    "heapTotal": 5763072,
+    "heapUsed": 4992928,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "missingVars": [
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "JWT_SECRET"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:18.236Z",
+  "level": "INFO",
+  "message": "📚 Checking dependencies...",
+  "pid": 34024,
+  "memory": {
+    "rss": 35708928,
+    "heapTotal": 5763072,
+    "heapUsed": 5005656,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:18.237Z",
+  "level": "INFO",
+  "message": "Dependency check results",
+  "pid": 34024,
+  "memory": {
+    "rss": 35889152,
+    "heapTotal": 5763072,
+    "heapUsed": 5052576,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "hasPackageJson": true,
+  "hasPackageLock": true,
+  "hasNodeModules": true,
+  "nextVersion": "15.3.4",
+  "reactVersion": "^19.0.0"
+}
+{
+  "timestamp": "2025-07-05T08:42:19.612Z",
+  "level": "SUCCESS",
+  "message": "All dependencies are properly installed",
+  "pid": 34024,
+  "memory": {
+    "rss": 35934208,
+    "heapTotal": 5763072,
+    "heapUsed": 5179312,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:19.614Z",
+  "level": "INFO",
+  "message": "⚙️ Checking Next.js configuration...",
+  "pid": 34024,
+  "memory": {
+    "rss": 35938304,
+    "heapTotal": 5763072,
+    "heapUsed": 5190296,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:19.615Z",
+  "level": "WARN",
+  "message": "No Next.js configuration file found",
+  "pid": 34024,
+  "memory": {
+    "rss": 35938304,
+    "heapTotal": 5763072,
+    "heapUsed": 5199080,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:19.615Z",
+  "level": "INFO",
+  "message": "🌐 Checking network configuration...",
+  "pid": 34024,
+  "memory": {
+    "rss": 35946496,
+    "heapTotal": 5763072,
+    "heapUsed": 5203408,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:19.621Z",
+  "level": "INFO",
+  "message": "Port check passed",
+  "pid": 34024,
+  "memory": {
+    "rss": 36175872,
+    "heapTotal": 5763072,
+    "heapUsed": 5274688,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "port": 3000,
+  "status": "available"
+}
+{
+  "timestamp": "2025-07-05T08:42:19.623Z",
+  "level": "INFO",
+  "message": "📋 Generating recommendations...",
+  "pid": 34024,
+  "memory": {
+    "rss": 36184064,
+    "heapTotal": 5763072,
+    "heapUsed": 5288856,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:19.624Z",
+  "level": "WARN",
+  "message": "⚠️ Found 4 recommendations:",
+  "pid": 34024,
+  "memory": {
+    "rss": 36200448,
+    "heapTotal": 5763072,
+    "heapUsed": 5304800,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Build",
+      "issue": "Build integrity check failed",
+      "solution": "Run: npm run build or rm -rf .next && npm run build"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Environment",
+      "issue": "Missing critical environment variables",
+      "solution": "Check .env.local file and ensure all required variables are set"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Chunk Loading",
+      "issue": "400 errors on JavaScript chunks indicate server routing issues",
+      "solution": "Check if Next.js is properly serving static files. Try: npm run build && npm start"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Cache",
+      "issue": "Browser cache might be serving stale chunks",
+      "solution": "Clear browser cache and hard refresh (Ctrl+Shift+R)"
+    }
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:19.625Z",
+  "level": "SUCCESS",
+  "message": "✅ Diagnostics completed!",
+  "pid": 34024,
+  "memory": {
+    "rss": 36270080,
+    "heapTotal": 5763072,
+    "heapUsed": 5343352,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.716Z",
+  "level": "INFO",
+  "message": "🔍 Starting VX10 build diagnostics...",
+  "pid": 57580,
+  "memory": {
+    "rss": 34471936,
+    "heapTotal": 5763072,
+    "heapUsed": 4508864,
+    "external": 1562360,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.722Z",
+  "level": "INFO",
+  "message": "📦 Checking build integrity...",
+  "pid": 57580,
+  "memory": {
+    "rss": 34717696,
+    "heapTotal": 5763072,
+    "heapUsed": 4653320,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.724Z",
+  "level": "INFO",
+  "message": "Checking build integrity...",
+  "pid": 57580,
+  "memory": {
+    "rss": 34725888,
+    "heapTotal": 5763072,
+    "heapUsed": 4662944,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.725Z",
+  "level": "INFO",
+  "message": "Build chunks found",
+  "pid": 57580,
+  "memory": {
+    "rss": 34742272,
+    "heapTotal": 5763072,
+    "heapUsed": 4683816,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "chunksCount": 25,
+  "chunks": [
+    "108-c3bf39388465b621.js",
+    "110-d50ad7a608e65ac5.js",
+    "111-b9f33fcff9bc5080.js",
+    "129-871043e8e1c6e525.js",
+    "197.d6ba3253de721430.js",
+    "296-4256bf31e0ee5e31.js",
+    "3-ce16837e18cf1a8a.js",
+    "341.a4c9e4b8dad9832e.js",
+    "469-f9d9c7ff3328235f.js",
+    "472.2c08b965bd9148e2.js"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:26.732Z",
+  "level": "ERROR",
+  "message": "Corrupted chunk files detected",
+  "pid": 57580,
+  "memory": {
+    "rss": 35069952,
+    "heapTotal": 5763072,
+    "heapUsed": 4814528,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "corruptedFiles": [
+    "app",
+    "pages"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:26.736Z",
+  "level": "INFO",
+  "message": "🏥 Checking server health...",
+  "pid": 57580,
+  "memory": {
+    "rss": 35131392,
+    "heapTotal": 5763072,
+    "heapUsed": 4835736,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.737Z",
+  "level": "INFO",
+  "message": "Checking server health...",
+  "pid": 57580,
+  "memory": {
+    "rss": 35143680,
+    "heapTotal": 5763072,
+    "heapUsed": 4843432,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.739Z",
+  "level": "INFO",
+  "message": "Server health status",
+  "pid": 57580,
+  "memory": {
+    "rss": "34MB",
+    "heapTotal": "5MB",
+    "heapUsed": "5MB",
+    "external": "2MB"
+  },
+  "cpu": {
+    "user": 31000,
+    "system": 31000
+  },
+  "uptime": "0s",
+  "version": "v22.12.0",
+  "platform": "win32",
+  "arch": "x64"
+}
+{
+  "timestamp": "2025-07-05T08:42:26.740Z",
+  "level": "INFO",
+  "message": "🌍 Checking environment configuration...",
+  "pid": 57580,
+  "memory": {
+    "rss": 35246080,
+    "heapTotal": 5763072,
+    "heapUsed": 4921800,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.742Z",
+  "level": "INFO",
+  "message": "Environment check results",
+  "pid": 57580,
+  "memory": {
+    "rss": 35340288,
+    "heapTotal": 5763072,
+    "heapUsed": 4939584,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "nodeVersion": "v22.12.0",
+  "nodeEnv": "not set",
+  "hasEnvFile": false,
+  "hasEnvExample": false,
+  "envVars": {
+    "DATABASE_URL": "❌ Missing",
+    "NEXTAUTH_SECRET": "❌ Missing",
+    "NEXTAUTH_URL": "❌ Missing",
+    "JWT_SECRET": "❌ Missing"
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.745Z",
+  "level": "WARN",
+  "message": "Missing critical environment variables",
+  "pid": 57580,
+  "memory": {
+    "rss": 35733504,
+    "heapTotal": 5763072,
+    "heapUsed": 4992472,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "missingVars": [
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "JWT_SECRET"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:26.747Z",
+  "level": "INFO",
+  "message": "📚 Checking dependencies...",
+  "pid": 57580,
+  "memory": {
+    "rss": 35573760,
+    "heapTotal": 5763072,
+    "heapUsed": 5005200,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:26.750Z",
+  "level": "INFO",
+  "message": "Dependency check results",
+  "pid": 57580,
+  "memory": {
+    "rss": 35397632,
+    "heapTotal": 5763072,
+    "heapUsed": 5056208,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "hasPackageJson": true,
+  "hasPackageLock": true,
+  "hasNodeModules": true,
+  "nextVersion": "15.3.4",
+  "reactVersion": "^19.0.0"
+}
+{
+  "timestamp": "2025-07-05T08:42:28.026Z",
+  "level": "SUCCESS",
+  "message": "All dependencies are properly installed",
+  "pid": 57580,
+  "memory": {
+    "rss": 35799040,
+    "heapTotal": 5763072,
+    "heapUsed": 5178952,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.027Z",
+  "level": "INFO",
+  "message": "⚙️ Checking Next.js configuration...",
+  "pid": 57580,
+  "memory": {
+    "rss": 35803136,
+    "heapTotal": 5763072,
+    "heapUsed": 5189936,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.028Z",
+  "level": "WARN",
+  "message": "No Next.js configuration file found",
+  "pid": 57580,
+  "memory": {
+    "rss": 35803136,
+    "heapTotal": 5763072,
+    "heapUsed": 5198720,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.029Z",
+  "level": "INFO",
+  "message": "🌐 Checking network configuration...",
+  "pid": 57580,
+  "memory": {
+    "rss": 35807232,
+    "heapTotal": 5763072,
+    "heapUsed": 5203048,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.032Z",
+  "level": "INFO",
+  "message": "Port check passed",
+  "pid": 57580,
+  "memory": {
+    "rss": 36040704,
+    "heapTotal": 5763072,
+    "heapUsed": 5274328,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "port": 3000,
+  "status": "available"
+}
+{
+  "timestamp": "2025-07-05T08:42:28.034Z",
+  "level": "INFO",
+  "message": "📋 Generating recommendations...",
+  "pid": 57580,
+  "memory": {
+    "rss": 36048896,
+    "heapTotal": 5763072,
+    "heapUsed": 5288496,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.035Z",
+  "level": "WARN",
+  "message": "⚠️ Found 4 recommendations:",
+  "pid": 57580,
+  "memory": {
+    "rss": 36065280,
+    "heapTotal": 5763072,
+    "heapUsed": 5304184,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Build",
+      "issue": "Build integrity check failed",
+      "solution": "Run: npm run build or rm -rf .next && npm run build"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Environment",
+      "issue": "Missing critical environment variables",
+      "solution": "Check .env.local file and ensure all required variables are set"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Chunk Loading",
+      "issue": "400 errors on JavaScript chunks indicate server routing issues",
+      "solution": "Check if Next.js is properly serving static files. Try: npm run build && npm start"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Cache",
+      "issue": "Browser cache might be serving stale chunks",
+      "solution": "Clear browser cache and hard refresh (Ctrl+Shift+R)"
+    }
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:42:28.036Z",
+  "level": "SUCCESS",
+  "message": "✅ Diagnostics completed!",
+  "pid": 57580,
+  "memory": {
+    "rss": 36134912,
+    "heapTotal": 5763072,
+    "heapUsed": 5342736,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.037Z",
+  "level": "INFO",
+  "message": "🔧 Running quick fix procedures...",
+  "pid": 57580,
+  "memory": {
+    "rss": 36134912,
+    "heapTotal": 5763072,
+    "heapUsed": 5350464,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:42:28.037Z",
+  "level": "INFO",
+  "message": "Applying fix: Clear Next.js cache",
+  "pid": 57580,
+  "memory": {
+    "rss": 36134912,
+    "heapTotal": 5763072,
+    "heapUsed": 5356552,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "description": "Removes cached build files"
+}
+{
+  "timestamp": "2025-07-05T08:42:28.056Z",
+  "level": "ERROR",
+  "message": "❌ Clear Next.js cache failed",
+  "pid": 57580,
+  "memory": {
+    "rss": 36204544,
+    "heapTotal": 5763072,
+    "heapUsed": 5426408,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "error": "Command failed: rm -rf .next"
+}
+{
+  "timestamp": "2025-07-05T08:42:28.058Z",
+  "level": "INFO",
+  "message": "Applying fix: Rebuild application",
+  "pid": 57580,
+  "memory": {
+    "rss": 36204544,
+    "heapTotal": 5763072,
+    "heapUsed": 5437744,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "description": "Creates fresh build"
+}
+{
+  "timestamp": "2025-07-05T08:43:11.566Z",
+  "level": "SUCCESS",
+  "message": "✅ Rebuild application completed",
+  "pid": 57580,
+  "memory": {
+    "rss": 33751040,
+    "heapTotal": 6811648,
+    "heapUsed": 4767432,
+    "external": 1607039,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:43:11.567Z",
+  "level": "INFO",
+  "message": "Applying fix: Clear npm cache",
+  "pid": 57580,
+  "memory": {
+    "rss": 33751040,
+    "heapTotal": 6811648,
+    "heapUsed": 4772528,
+    "external": 1607039,
+    "arrayBuffers": 10531
+  },
+  "description": "Clears npm cache"
+}
+{
+  "timestamp": "2025-07-05T08:43:19.088Z",
+  "level": "SUCCESS",
+  "message": "✅ Clear npm cache completed",
+  "pid": 57580,
+  "memory": {
+    "rss": 33775616,
+    "heapTotal": 6811648,
+    "heapUsed": 4837016,
+    "external": 1607039,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.056Z",
+  "level": "INFO",
+  "message": "🔍 Starting VX10 build diagnostics...",
+  "pid": 41300,
+  "memory": {
+    "rss": 34459648,
+    "heapTotal": 5763072,
+    "heapUsed": 4508864,
+    "external": 1562360,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.062Z",
+  "level": "INFO",
+  "message": "📦 Checking build integrity...",
+  "pid": 41300,
+  "memory": {
+    "rss": 34705408,
+    "heapTotal": 5763072,
+    "heapUsed": 4653320,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.063Z",
+  "level": "INFO",
+  "message": "Checking build integrity...",
+  "pid": 41300,
+  "memory": {
+    "rss": 34713600,
+    "heapTotal": 5763072,
+    "heapUsed": 4662944,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.064Z",
+  "level": "INFO",
+  "message": "Build chunks found",
+  "pid": 41300,
+  "memory": {
+    "rss": 34729984,
+    "heapTotal": 5763072,
+    "heapUsed": 4683816,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "chunksCount": 25,
+  "chunks": [
+    "108-c3bf39388465b621.js",
+    "110-d50ad7a608e65ac5.js",
+    "111-b9f33fcff9bc5080.js",
+    "129-871043e8e1c6e525.js",
+    "197.d6ba3253de721430.js",
+    "296-4256bf31e0ee5e31.js",
+    "3-ce16837e18cf1a8a.js",
+    "341.a4c9e4b8dad9832e.js",
+    "469-f9d9c7ff3328235f.js",
+    "472.2c08b965bd9148e2.js"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:45:01.067Z",
+  "level": "ERROR",
+  "message": "Corrupted chunk files detected",
+  "pid": 41300,
+  "memory": {
+    "rss": 35028992,
+    "heapTotal": 5763072,
+    "heapUsed": 4814528,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  },
+  "corruptedFiles": [
+    "app",
+    "pages"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:45:01.069Z",
+  "level": "INFO",
+  "message": "🏥 Checking server health...",
+  "pid": 41300,
+  "memory": {
+    "rss": 35094528,
+    "heapTotal": 5763072,
+    "heapUsed": 4835736,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.069Z",
+  "level": "INFO",
+  "message": "Checking server health...",
+  "pid": 41300,
+  "memory": {
+    "rss": 35106816,
+    "heapTotal": 5763072,
+    "heapUsed": 4843432,
+    "external": 1585436,
+    "arrayBuffers": 10515
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.070Z",
+  "level": "INFO",
+  "message": "Server health status",
+  "pid": 41300,
+  "memory": {
+    "rss": "34MB",
+    "heapTotal": "5MB",
+    "heapUsed": "5MB",
+    "external": "2MB"
+  },
+  "cpu": {
+    "user": 31000,
+    "system": 15000
+  },
+  "uptime": "0s",
+  "version": "v22.12.0",
+  "platform": "win32",
+  "arch": "x64"
+}
+{
+  "timestamp": "2025-07-05T08:45:01.071Z",
+  "level": "INFO",
+  "message": "🌍 Checking environment configuration...",
+  "pid": 41300,
+  "memory": {
+    "rss": 35205120,
+    "heapTotal": 5763072,
+    "heapUsed": 4921824,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.072Z",
+  "level": "INFO",
+  "message": "Environment check results",
+  "pid": 41300,
+  "memory": {
+    "rss": 35307520,
+    "heapTotal": 5763072,
+    "heapUsed": 4939608,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "nodeVersion": "v22.12.0",
+  "nodeEnv": "not set",
+  "hasEnvFile": false,
+  "hasEnvExample": false,
+  "envVars": {
+    "DATABASE_URL": "❌ Missing",
+    "NEXTAUTH_SECRET": "❌ Missing",
+    "NEXTAUTH_URL": "❌ Missing",
+    "JWT_SECRET": "❌ Missing"
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.074Z",
+  "level": "WARN",
+  "message": "Missing critical environment variables",
+  "pid": 41300,
+  "memory": {
+    "rss": 35790848,
+    "heapTotal": 5763072,
+    "heapUsed": 4992496,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "missingVars": [
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "JWT_SECRET"
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:45:01.075Z",
+  "level": "INFO",
+  "message": "📚 Checking dependencies...",
+  "pid": 41300,
+  "memory": {
+    "rss": 35606528,
+    "heapTotal": 5763072,
+    "heapUsed": 5005224,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:01.077Z",
+  "level": "INFO",
+  "message": "Dependency check results",
+  "pid": 41300,
+  "memory": {
+    "rss": 35360768,
+    "heapTotal": 5763072,
+    "heapUsed": 5056232,
+    "external": 1585452,
+    "arrayBuffers": 10531
+  },
+  "hasPackageJson": true,
+  "hasPackageLock": true,
+  "hasNodeModules": true,
+  "nextVersion": "15.3.4",
+  "reactVersion": "^19.0.0"
+}
+{
+  "timestamp": "2025-07-05T08:45:02.394Z",
+  "level": "SUCCESS",
+  "message": "All dependencies are properly installed",
+  "pid": 41300,
+  "memory": {
+    "rss": 35770368,
+    "heapTotal": 5763072,
+    "heapUsed": 5178928,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:02.394Z",
+  "level": "INFO",
+  "message": "⚙️ Checking Next.js configuration...",
+  "pid": 41300,
+  "memory": {
+    "rss": 35774464,
+    "heapTotal": 5763072,
+    "heapUsed": 5189912,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:02.395Z",
+  "level": "WARN",
+  "message": "No Next.js configuration file found",
+  "pid": 41300,
+  "memory": {
+    "rss": 35774464,
+    "heapTotal": 5763072,
+    "heapUsed": 5198696,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:02.396Z",
+  "level": "INFO",
+  "message": "🌐 Checking network configuration...",
+  "pid": 41300,
+  "memory": {
+    "rss": 35778560,
+    "heapTotal": 5763072,
+    "heapUsed": 5203024,
+    "external": 1587908,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:02.399Z",
+  "level": "INFO",
+  "message": "Port check passed",
+  "pid": 41300,
+  "memory": {
+    "rss": 36012032,
+    "heapTotal": 5763072,
+    "heapUsed": 5274304,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "port": 3000,
+  "status": "available"
+}
+{
+  "timestamp": "2025-07-05T08:45:02.400Z",
+  "level": "INFO",
+  "message": "📋 Generating recommendations...",
+  "pid": 41300,
+  "memory": {
+    "rss": 36020224,
+    "heapTotal": 5763072,
+    "heapUsed": 5288472,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
+{
+  "timestamp": "2025-07-05T08:45:02.400Z",
+  "level": "WARN",
+  "message": "⚠️ Found 4 recommendations:",
+  "pid": 41300,
+  "memory": {
+    "rss": 36036608,
+    "heapTotal": 5763072,
+    "heapUsed": 5304160,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Build",
+      "issue": "Build integrity check failed",
+      "solution": "Run: npm run build or rm -rf .next && npm run build"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Environment",
+      "issue": "Missing critical environment variables",
+      "solution": "Check .env.local file and ensure all required variables are set"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Chunk Loading",
+      "issue": "400 errors on JavaScript chunks indicate server routing issues",
+      "solution": "Check if Next.js is properly serving static files. Try: npm run build && npm start"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Cache",
+      "issue": "Browser cache might be serving stale chunks",
+      "solution": "Clear browser cache and hard refresh (Ctrl+Shift+R)"
+    }
+  ]
+}
+{
+  "timestamp": "2025-07-05T08:45:02.401Z",
+  "level": "SUCCESS",
+  "message": "✅ Diagnostics completed!",
+  "pid": 41300,
+  "memory": {
+    "rss": 36106240,
+    "heapTotal": 5763072,
+    "heapUsed": 5342712,
+    "external": 1607039,
+    "arrayBuffers": 12987
+  }
+}
