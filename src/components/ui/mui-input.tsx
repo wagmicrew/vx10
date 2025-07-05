@@ -23,7 +23,7 @@ interface EnhancedTextFieldProps extends Omit<TextFieldProps, 'variant'> {
 
 export const EnhancedTextField = forwardRef<HTMLDivElement, EnhancedTextFieldProps>(
   ({ variant = 'solid', startIcon, endIcon, className, sx, ...props }, ref) => {
-    const getVariantStyles = () => {
+    const getVariantStyles = (): any => {
       switch (variant) {
         case 'glass':
           return {
@@ -171,21 +171,24 @@ export function EnhancedAutocomplete<T>({
         />
       )}
       renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Chip
-            key={index}
-            label={typeof option === 'string' ? option : String(option)}
-            {...getTagProps({ index })}
-            size="small"
-            sx={{
-              backgroundColor: 'primary.main',
-              color: 'primary.contrastText',
-              '& .MuiChip-deleteIcon': {
+        value.map((option, index) => {
+          const { key, ...tagProps } = getTagProps({ index })
+          return (
+            <Chip
+              key={key}
+              label={typeof option === 'string' ? option : String(option)}
+              {...tagProps}
+              size="small"
+              sx={{
+                backgroundColor: 'primary.main',
                 color: 'primary.contrastText',
-              },
-            }}
-          />
-        ))
+                '& .MuiChip-deleteIcon': {
+                  color: 'primary.contrastText',
+                },
+              }}
+            />
+          )
+        })
       }
       {...props}
     />

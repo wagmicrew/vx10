@@ -198,14 +198,14 @@ export const PerformanceMonitor: React.FC = () => {
   React.useEffect(() => {
     // Monitor Core Web Vitals
     if (typeof window !== 'undefined' && 'web-vital' in window) {
-      import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
+      import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
         const vitalsHandler = (metric: { name: string; value: number }) => {
           console.log('Web Vital:', metric);
           
           // Report poor scores
           const thresholds: Record<string, number> = {
             CLS: 0.1,
-            FID: 100,
+            INP: 200,
             FCP: 1800,
             LCP: 2500,
             TTFB: 800
@@ -227,7 +227,7 @@ export const PerformanceMonitor: React.FC = () => {
         };
 
         onCLS(vitalsHandler);
-        onFID(vitalsHandler);
+        onINP(vitalsHandler);
         onFCP(vitalsHandler);
         onLCP(vitalsHandler);
         onTTFB(vitalsHandler);

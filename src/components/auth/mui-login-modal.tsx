@@ -17,9 +17,9 @@ import {
   LogIn, 
   Mail, 
   Lock, 
-  Visibility, 
-  VisibilityOff,
-  Google,
+  Eye,
+  EyeOff,
+  Chrome,
   Github
 } from "lucide-react"
 import { GlassmorphismPopup } from "@/components/ui/glassmorphism-popup"
@@ -55,7 +55,7 @@ export function MUILoginModal({ isOpen, onClose }: MUILoginModalProps) {
         // Optionally redirect or refresh
         window.location.reload()
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -68,7 +68,7 @@ export function MUILoginModal({ isOpen, onClose }: MUILoginModalProps) {
     
     try {
       await signIn(provider, { callbackUrl: "/" })
-    } catch (error) {
+    } catch {
       setError("Social login failed. Please try again.")
       setIsLoading(false)
     }
@@ -169,7 +169,7 @@ export function MUILoginModal({ isOpen, onClose }: MUILoginModalProps) {
                       edge="end"
                       sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
                     >
-                      {showPassword ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -255,7 +255,7 @@ export function MUILoginModal({ isOpen, onClose }: MUILoginModalProps) {
             variant="outlined"
             onClick={() => handleSocialLogin("google")}
             disabled={isLoading}
-            startIcon={<Google className="h-4 w-4" />}
+            startIcon={<Chrome className="h-4 w-4" />}
             sx={{
               py: 1.5,
               backgroundColor: 'rgba(255, 255, 255, 0.1)',

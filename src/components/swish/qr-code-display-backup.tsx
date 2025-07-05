@@ -18,7 +18,7 @@ interface SwishQRCodeDisplayProps {
 
 export function SwishQRCodeDisplay({ amount, message, bookingId, onClose, onConfirmBooking }: SwishQRCodeDisplayProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
-  const [fallbackInfo, setFallbackInfo] = useState<any>(null)
+  const [fallbackInfo, setFallbackInfo] = useState<{ phoneNumber: string; amount: number; message: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [paymentReady, setPaymentReady] = useState(false)
@@ -152,7 +152,7 @@ export function SwishQRCodeDisplay({ amount, message, bookingId, onClose, onConf
                           <li>Öppna Swish-appen på din telefon</li>
                           <li>Skanna QR-koden ovan</li>
                           <li>Bekräfta betalningen i appen</li>
-                          <li>Klicka på "Jag har betalat" till höger</li>
+                          <li>Klicka på &quot;Jag har betalat&quot; till höger</li>
                         </ol>
                       </div>
                     </div>

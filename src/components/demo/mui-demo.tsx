@@ -7,9 +7,7 @@ import {
   Download, 
   Settings, 
   User, 
-  Mail, 
-  Lock,
-  Search,
+  Mail,
   Filter
 } from "lucide-react"
 import {
@@ -225,7 +223,7 @@ export function MUIDemo() {
           <li>Replace <code>Button</code> with <code>EnhancedButton</code></li>
           <li>Replace <code>Input</code> with <code>EnhancedTextField</code></li>
           <li>Replace <code>Card</code> components with <code>EnhancedCard</code> variants</li>
-          <li>Use <code>variant="glass"</code> for glassmorphism effects</li>
+          <li>Use <code>variant=&quot;glass&quot;</code> for glassmorphism effects</li>
           <li>Keep <code>GlassmorphismPopup</code> for modals with BorderBeam</li>
         </Box>
       </Box>

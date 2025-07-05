@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
     // Add request metadata
     const enrichedError = {
       ...errorData,
-      ip: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
       referer: request.headers.get('referer') || 'unknown',
       timestamp: new Date().toISOString()
-    };
+    }
 
     // Get logger instance
     const logger = await getLogger();

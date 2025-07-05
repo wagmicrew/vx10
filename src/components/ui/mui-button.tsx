@@ -219,32 +219,30 @@ export const EnhancedFab = forwardRef<HTMLButtonElement, EnhancedFabProps>(
 EnhancedFab.displayName = "EnhancedFab"
 
 // Enhanced Button Group
-interface EnhancedButtonGroupProps extends ButtonGroupProps {
-  variant?: 'glass' | 'solid' | 'outlined' | 'contained'
+interface EnhancedButtonGroupProps extends Omit<ButtonGroupProps, 'variant'> {
+  variant?: 'glass' | 'solid' | 'outlined' | 'contained' | 'text'
 }
 
 export const EnhancedButtonGroup = forwardRef<HTMLDivElement, EnhancedButtonGroupProps>(
   ({ variant = 'contained', className, sx, ...props }, ref) => {
-    const getVariantStyles = () => {
-      switch (variant) {
-        case 'glass':
-          return {
-            '& .MuiButton-root': {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              },
+    const getVariantStyles = (): any => {
+      if (variant === 'glass') {
+        return {
+          '& .MuiButton-root': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: 'white',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
             },
-          }
-        default:
-          return {}
+          },
+        }
       }
+      return {}
     }
 
-    const muiVariant = variant === 'glass' ? 'contained' : variant
+    const muiVariant = variant === 'glass' || variant === 'solid' ? 'contained' : variant
 
     return (
       <ButtonGroup
