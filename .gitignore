@@ -50,6 +50,13 @@ yarn-error.log*
 .temp/
 .tmp/
 
+# TypeScript declaration files
+*.d.ts
+!next-env.d.ts
+
+# Prisma generated files
+/src/generated/
+
 # Environment variables
 .env
 .env.local
