@@ -170,14 +170,19 @@ setup_user_context() {
     log "Using deploy user: $DEPLOY_USER"
     log "Deploy home: $DEPLOY_HOME"
 
-    # Switch to www-data if necessary
-    if [ "$DEPLOY_USER" != "www-data" ]; then
-        sudo -u www-data bash << EOS
-            cd /var/www/vx10
-            source /var/www/vx10/vx10-admin.sh
-        EOS
-        exit
-    fi
+    # Switch to www-data if necessary for permission-sensitive operations
+    # Only do this for operations that need file access rights, not for the whole script
+    fix_permissions() {
+        if [[ -d "/var/www/vx10" ]]; then
+            sudo chown -R www-data:www-data /var/www/vx10
+            sudo find /var/www/vx10 -type d -exec chmod 755 {} \;
+            sudo find /var/www/vx10 -type f -exec chmod 644 {} \;
+            log "Fixed permissions for /var/www/vx10"
+        fi
+    }
+    
+    # Run fix permissions
+    fix_permissions
 }
 
 # Function to get project directory
