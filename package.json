@@ -34,10 +34,14 @@
     "db:setup": "npm run supabase:migrate && npm run supabase:generate && npm run supabase:seed"
   },
   "dependencies": {
+    "@prisma/client": "6.11.1",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/supabase-js": "^2.38.4",
-    "@prisma/client": "6.11.1",
-    "prisma": "6.11.1"
+    "next": "^15.4.3",
+    "next-auth": "^4.24.11",
+    "prisma": "6.11.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
