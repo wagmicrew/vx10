@@ -982,27 +982,101 @@ logs_clear() {
 utilities_menu() {
     while true; do
         clear
-        echo -e "${MAGENTA}================================${NC}"
-        echo -e "${MAGENTA}     VX10 Utilities Menu       ${NC}"
-        echo -e "${MAGENTA}================================${NC}"
+        echo -e "${YELLOW}================================${NC}"
+        echo -e "${YELLOW}       VX10 Utilities           ${NC}"
+        echo -e "${YELLOW}================================${NC}"
         echo
-        echo "1) Clear cache (Next.js + npm)"
+        echo "1) Clear cache"
         echo "2) Reinstall dependencies"
         echo "3) Restart application"
         echo "4) Setup database"
-        echo "5) Back to main menu"
+        echo "5) Quick fix permissions"
+        echo "6) Full fix permissions"
+        echo "7) Check disk space"
+        echo "8) Check process status"
+        echo "9) Back to main menu"
         echo
-        read -p "Select option [1-5]: " choice
+        read -p "Select option [1-9]: " choice
         
         case $choice in
             1) clear_cache ;;
             2) reinstall_dependencies ;;
             3) restart_application ;;
             4) setup_database ;;
-            5) break ;;
+            5) quick_fix_permissions ;;
+            6) full_fix_permissions ;;
+            7) check_disk_space ;;
+            8) check_process_status ;;
+            9) break ;;
             *) error "Invalid option. Please try again." ;;
         esac
     done
+}
+
+# Add utility functions
+check_disk_space() {
+    log "Checking disk space..."
+    df -h .
+    echo
+    log "Directory sizes:"
+    du -sh */ 2>/dev/null | sort -hr | head -10
+    read -p "Press Enter to continue..."
+}
+
+check_process_status() {
+    log "Checking process status..."
+    echo "=== PM2 Processes ==="
+    if [[ $IS_ROOT == true ]]; then
+        sudo -u "$DEPLOY_USER" pm2 status 2>/dev/null || echo "No PM2 processes found"
+    else
+        pm2 status 2>/dev/null || echo "No PM2 processes found"
+    fi
+    
+    echo
+    echo "=== Port Usage ==="
+    netstat -tlnp | grep -E ':(3000|80|443)' 2>/dev/null || echo "No processes on common ports"
+    
+    read -p "Press Enter to continue..."
+}
+
+# Add a quick permissions fix function for utilities menu
+quick_fix_permissions() {
+    local current_dir="$(pwd)"
+    log "Quick permission fix for current directory..."
+    
+    # Basic ownership fix
+    sudo chown "$DEPLOY_USER:www-data" "$current_dir" 2>/dev/null || true
+    
+    # Fix only the most critical files
+    sudo chown "$DEPLOY_USER:www-data" "$current_dir"/{package.json,package-lock.json,.env*,next.config.js,ecosystem.config.js} 2>/dev/null || true
+    
+    # Make sure the user can read/write
+    sudo chmod 755 "$current_dir" 2>/dev/null || true
+    
+    success "Quick permissions fixed"
+    read -p "Press Enter to continue..."
+}
+
+# Add a full permissions fix function for when needed
+full_fix_permissions() {
+    local current_dir="$(pwd)"
+    warning "This will fix permissions for ALL files and may take time!"
+    read -p "Continue? (y/N): " confirm
+    
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        log "Fixing all permissions (this may take a while)..."
+        
+        # Full recursive fix
+        sudo chown -R "$DEPLOY_USER:www-data" "$current_dir" 2>/dev/null || true
+        sudo find "$current_dir" -type d -exec chmod 755 {} \; 2>/dev/null || true
+        sudo find "$current_dir" -type f -exec chmod 644 {} \; 2>/dev/null || true
+        
+        # Make scripts executable
+        sudo find "$current_dir" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+        
+        success "All permissions fixed"
+    fi
+    read -p "Press Enter to continue..."
 }
 
 # Main Menu
@@ -1079,7 +1153,6 @@ system_info() {
     echo "Nginx: $(sudo systemctl is-active nginx 2>/dev/null || echo 'not installed')"
     echo "Redis: $(sudo systemctl is-active redis-server 2>/dev/null || echo 'not installed')"
     echo "PM2: $(pm2 status | grep -c "online" 2>/dev/null || echo '0') processes running"
-    echo
     
     if command_exists node; then
         echo "=== Node.js ==="
