@@ -992,11 +992,12 @@ utilities_menu() {
         echo "4) Setup database"
         echo "5) Quick fix permissions"
         echo "6) Full fix permissions"
-        echo "7) Check disk space"
-        echo "8) Check process status"
-        echo "9) Back to main menu"
+        echo "7) Diagnose and fix issues"
+        echo "8) Check disk space"
+        echo "9) Check process status"
+        echo "10) Back to main menu"
         echo
-        read -p "Select option [1-9]: " choice
+        read -p "Select option [1-10]: " choice
         
         case $choice in
             1) clear_cache ;;
@@ -1005,9 +1006,10 @@ utilities_menu() {
             4) setup_database ;;
             5) quick_fix_permissions ;;
             6) full_fix_permissions ;;
-            7) check_disk_space ;;
-            8) check_process_status ;;
-            9) break ;;
+            7) diagnose_and_fix ;;
+            8) check_disk_space ;;
+            9) check_process_status ;;
+            10) break ;;
             *) error "Invalid option. Please try again." ;;
         esac
     done
@@ -1079,6 +1081,113 @@ full_fix_permissions() {
     read -p "Press Enter to continue..."
 }
 
+# Add a function to check and fix common issues
+diagnose_and_fix() {
+    local project_dir=$(prompt_project_dir)
+    cd "$project_dir"
+    
+    log "Running diagnostics and fixes..."
+    
+    # Fix git ownership
+    fix_git_ownership "$project_dir"
+    
+    # Check package.json
+    if [[ ! -f "package.json" ]]; then
+        error "package.json not found!"
+        return 1
+    fi
+    
+    # Check if node_modules exists and is not empty
+    if [[ ! -d "node_modules" ]] || [[ -z "$(ls -A node_modules 2>/dev/null)" ]]; then
+        log "node_modules missing or empty, installing..."
+        execute_with_user "cd '$project_dir' && npm install"
+    fi
+    
+    # Check if .next exists
+    if [[ ! -d ".next" ]]; then
+        log ".next directory missing, building..."
+        execute_with_user "cd '$project_dir' && npm run build"
+    fi
+    
+    # Check PM2 processes
+    if [[ $IS_ROOT == true ]]; then
+        local pm2_status=$(runuser -l "$DEPLOY_USER" -c "pm2 status" 2>/dev/null | grep -c "online" || echo "0")
+    else
+        local pm2_status=$(pm2 status 2>/dev/null | grep -c "online" || echo "0")
+    fi
+    
+    if [[ "$pm2_status" -eq 0 ]]; then
+        log "No PM2 processes running, starting application..."
+        if [[ $IS_ROOT == true ]]; then
+            runuser -l "$DEPLOY_USER" -c "cd '$project_dir' && pm2 start ecosystem.config.js"
+        else
+            cd "$project_dir" && pm2 start ecosystem.config.js
+        fi
+    fi
+    
+    # Fix permissions
+    fix_permissions
+    
+    success "Diagnostics and fixes completed!"
+    read -p "Press Enter to continue..."
+}
+
+# Add a comprehensive setup function for new installations
+setup_project_from_scratch() {
+    local project_dir=$(prompt_project_dir)
+    
+    log "Setting up project from scratch in $project_dir..."
+    
+    # Create directory if it doesn't exist
+    if [[ ! -d "$project_dir" ]]; then
+        log "Creating project directory..."
+        sudo mkdir -p "$project_dir"
+        sudo chown "$DEPLOY_USER:www-data" "$project_dir"
+    fi
+    
+    cd "$project_dir"
+    
+    # Check if it's already a git repository
+    if [[ ! -d ".git" ]]; then
+        log "Initializing git repository..."
+        read -p "Enter GitHub repository URL: " repo_url
+        if [[ -n "$repo_url" ]]; then
+            execute_with_user "cd '$project_dir' && git clone '$repo_url' ."
+        else
+            error "No repository URL provided"
+            return 1
+        fi
+    fi
+    
+    # Fix git ownership
+    fix_git_ownership "$project_dir"
+    
+    # Install dependencies
+    log "Installing dependencies..."
+    if [[ -f "package.json" ]]; then
+        execute_with_user "cd '$project_dir' && npm install"
+    else
+        error "No package.json found in repository"
+        return 1
+    fi
+    
+    # Generate Prisma client if schema exists
+    if [[ -f "prisma/schema.prisma" ]]; then
+        log "Generating Prisma client..."
+        execute_with_user "cd '$project_dir' && npm run prisma:generate"
+    fi
+    
+    # Build project
+    log "Building project..."
+    execute_with_user "cd '$project_dir' && npm run build"
+    
+    # Fix final permissions
+    fix_permissions
+    
+    success "Project setup completed!"
+    read -p "Press Enter to continue..."
+}
+
 # Main Menu
 main_menu() {
     while true; do
@@ -1088,27 +1197,27 @@ main_menu() {
         echo -e "${GREEN}================================${NC}"
         echo
         echo "1) GitHub Management"
-        echo "2) PM2 Management"
-        echo "3) Node.js Management"
-        echo "4) Redis Management"
-        echo "5) Log Viewer"
+        echo "2) Node.js Management"
+        echo "3) PM2 Management"
+        echo "4) Nginx Management"
+        echo "5) Database Management"
         echo "6) Utilities"
-        echo "7) System Info"
-        echo "8) Exit"
+        echo "7) System Information"
+        echo "8) Setup project from scratch"
+        echo "9) Exit"
         echo
-        echo -e "${BLUE}Current project directory: $(get_project_dir)${NC}"
-        echo
-        read -p "Select option [1-8]: " choice
+        read -p "Select option [1-9]: " choice
         
         case $choice in
             1) github_menu ;;
-            2) pm2_menu ;;
-            3) node_menu ;;
-            4) redis_menu ;;
-            5) logs_menu ;;
+            2) node_menu ;;
+            3) pm2_menu ;;
+            4) nginx_menu ;;
+            5) database_menu ;;
             6) utilities_menu ;;
             7) system_info ;;
-            8) 
+            8) setup_project_from_scratch ;;
+            9) 
                 log "Goodbye!"
                 exit 0
                 ;;
