@@ -135,7 +135,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Check if running as root and setup user context
+# Ensure www-data is owner and setup user context
 setup_user_context() {
     if [[ $EUID -eq 0 ]]; then
         warning "Running as root. Will use vx10 user context."
@@ -154,14 +154,30 @@ setup_user_context() {
         # Ensure proper permissions
         mkdir -p /var/www
         chown vx10:vx10 /var/www
+        # Ensure www-data owns the project directory
+        sudo chown -R www-data:www-data /var/www/vx10
+        
     else
         DEPLOY_USER="$USER"
         DEPLOY_HOME="$HOME"
         IS_ROOT=false
     fi
-    
+
+    # Set permissions
+    sudo find /var/www/vx10 -type d -exec chmod 755 {} \;
+    sudo find /var/www/vx10 -type f -exec chmod 644 {} \;
+
     log "Using deploy user: $DEPLOY_USER"
     log "Deploy home: $DEPLOY_HOME"
+
+    # Switch to www-data if necessary
+    if [ "$DEPLOY_USER" != "www-data" ]; then
+        sudo -u www-data bash << EOS
+            cd /var/www/vx10
+            source /var/www/vx10/vx10-admin.sh
+        EOS
+        exit
+    fi
 }
 
 # Function to get project directory
