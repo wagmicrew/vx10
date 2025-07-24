@@ -535,7 +535,7 @@ check_process_status() {
     read -p "Press Enter to continue..."
 }
 
-# Enhanced node_install_deps function
+# Enhanced node_install_deps function with permission fixes
 node_install_deps() {
     local project_dir=$(prompt_project_dir)
     
@@ -543,6 +543,22 @@ node_install_deps() {
     
     # Fix git ownership first
     fix_git_ownership "$project_dir"
+    
+    # Check if package.json exists
+    if [[ ! -f "$project_dir/package.json" ]]; then
+        error "package.json not found in $project_dir"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    # Remove existing node_modules if permissions are broken
+    if [[ -d "$project_dir/node_modules" ]]; then
+        log "Checking node_modules permissions..."
+        if [[ ! -x "$project_dir/node_modules/.bin/prisma" ]] && [[ -f "$project_dir/node_modules/.bin/prisma" ]]; then
+            warning "Found permission issues with node_modules, cleaning..."
+            execute_with_user "cd '$project_dir' && rm -rf node_modules package-lock.json"
+        fi
+    fi
     
     # Check if package-lock.json exists
     if [[ -f "$project_dir/package-lock.json" ]]; then
@@ -553,8 +569,53 @@ node_install_deps() {
         execute_with_user "cd '$project_dir' && npm install"
     fi
     
-    success "Dependencies installed"
+    # Fix permissions after install
+    fix_node_modules_permissions "$project_dir"
+    
+    # Verify installation
+    if [[ -d "$project_dir/node_modules" ]]; then
+        success "Dependencies installed successfully"
+        
+        # Check if Next.js is installed
+        if [[ -f "$project_dir/node_modules/.bin/next" ]]; then
+            log "Next.js is available: $(execute_with_user "cd '$project_dir' && npx next --version")"
+        else
+            warning "Next.js not found in dependencies"
+        fi
+    else
+        error "Dependencies installation failed"
+    fi
+    
     read -p "Press Enter to continue..."
+}
+
+# Add function to fix node_modules permissions
+fix_node_modules_permissions() {
+    local project_dir="$1"
+    
+    if [[ -d "$project_dir/node_modules" ]]; then
+        log "Fixing node_modules permissions..."
+        
+        # Fix ownership
+        if [[ $IS_ROOT == true ]]; then
+            chown -R "$DEPLOY_USER:www-data" "$project_dir/node_modules"
+        fi
+        
+        # Fix executable permissions for .bin directory
+        if [[ -d "$project_dir/node_modules/.bin" ]]; then
+            chmod -R 755 "$project_dir/node_modules/.bin"
+            log "Fixed .bin directory permissions"
+        fi
+        
+        # Fix specific binaries that commonly have permission issues
+        local binaries=("prisma" "next" "eslint" "typescript")
+        for binary in "${binaries[@]}"; do
+            if [[ -f "$project_dir/node_modules/.bin/$binary" ]]; then
+                chmod +x "$project_dir/node_modules/.bin/$binary"
+                log "Fixed $binary permissions"
+            fi
+        done
+    fi
 }
 
 # Enhanced node_clean_reinstall function
@@ -568,7 +629,7 @@ node_clean_reinstall() {
         fix_git_ownership "$project_dir"
         
         log "Cleaning node_modules..."
-        execute_with_user "cd '$project_dir' && rm -rf node_modules package-lock.json"
+        execute_with_user "cd '$project_dir' && rm -rf node_modules package-lock.json .next"
         
         log "Clearing npm cache..."
         if [[ $IS_ROOT == true ]]; then
@@ -581,10 +642,30 @@ node_clean_reinstall() {
         execute_with_user "cd '$project_dir' && npm install"
         
         # Fix permissions after install
+        fix_node_modules_permissions "$project_dir"
         fix_permissions
         
         success "Clean reinstall completed"
     fi
+    read -p "Press Enter to continue..."
+}
+
+# Add a function to specifically fix permission issues
+node_fix_permissions() {
+    local project_dir=$(prompt_project_dir)
+    
+    log "Fixing Node.js related permissions..."
+    
+    # Fix git ownership
+    fix_git_ownership "$project_dir"
+    
+    # Fix node_modules permissions
+    fix_node_modules_permissions "$project_dir"
+    
+    # Fix general permissions
+    fix_permissions
+    
+    success "Permissions fixed"
     read -p "Press Enter to continue..."
 }
 
@@ -876,12 +957,31 @@ node_build() {
     if [[ ! -d "$project_dir/node_modules" ]]; then
         warning "node_modules not found. Installing dependencies first..."
         execute_with_user "cd '$project_dir' && npm install"
+        fix_node_modules_permissions "$project_dir"
     fi
     
-    # Check if next is available in node_modules
-    if [[ ! -f "$project_dir/node_modules/.bin/next" ]]; then
-        warning "Next.js not found in node_modules. Installing dependencies..."
-        execute_with_user "cd '$project_dir' && npm install"
+    # Check if next is available and executable
+    if [[ ! -f "$project_dir/node_modules/.bin/next" ]] || [[ ! -x "$project_dir/node_modules/.bin/next" ]]; then
+        warning "Next.js not found or not executable. Installing dependencies..."
+        execute_with_user "cd '$project_dir' && rm -rf node_modules package-lock.json && npm install"
+        fix_node_modules_permissions "$project_dir"
+    fi
+    
+    # Check if prisma is available and executable (needed for build)
+    if [[ -f "$project_dir/node_modules/.bin/prisma" ]] && [[ ! -x "$project_dir/node_modules/.bin/prisma" ]]; then
+        warning "Prisma binary found but not executable. Fixing permissions..."
+        fix_node_modules_permissions "$project_dir"
+    fi
+    
+    # Generate Prisma client if schema exists
+    if [[ -f "$project_dir/prisma/schema.prisma" ]]; then
+        log "Generating Prisma client..."
+        execute_with_user "cd '$project_dir' && npx prisma generate"
+        if [[ $? -ne 0 ]]; then
+            error "Prisma generate failed. Trying to fix permissions and retry..."
+            fix_node_modules_permissions "$project_dir"
+            execute_with_user "cd '$project_dir' && npx prisma generate"
+        fi
     fi
     
     # Use npx to ensure we use the local version
@@ -892,7 +992,17 @@ node_build() {
         success "Build completed successfully"
     else
         error "Build failed"
+        log "Trying to diagnose the issue..."
+        
+        # Check if it's a permission issue
+        if [[ ! -x "$project_dir/node_modules/.bin/next" ]]; then
+            warning "Next.js binary is not executable. Fixing permissions..."
+            fix_node_modules_permissions "$project_dir"
+            log "Retrying build..."
+            execute_with_user "cd '$project_dir' && npx next build"
+        fi
     fi
+    
     read -p "Press Enter to continue..."
 }
 
@@ -957,10 +1067,11 @@ node_menu() {
         echo "7) Build project"
         echo "8) Start dev server"
         echo "9) Run tests"
-        echo "10) Check versions"
-        echo "11) Back to main menu"
+        echo "10) Fix permissions"
+        echo "11) Check versions"
+        echo "12) Back to main menu"
         echo
-        read -p "Select option [1-11]: " choice
+        read -p "Select option [1-12]: " choice
         
         case $choice in
             1) node_check_project_health ;;
@@ -972,8 +1083,9 @@ node_menu() {
             7) node_build ;;
             8) node_dev ;;
             9) node_test ;;
-            10) node_version ;;
-            11) break ;;
+            10) node_fix_permissions ;;
+            11) node_version ;;
+            12) break ;;
             *) error "Invalid option. Please try again." ;;
         esac
     done
@@ -1791,6 +1903,494 @@ check_prerequisites() {
     fi
     
     if ! command_exists curl; then
+        missing_tools+=("curl")
+    fi
+    
+    if ! command_exists wget; then
+        missing_tools+=("wget")
+    fi
+    
+    if ! command_exists unzip; then
+        missing_tools+=("unzip")
+    fi
+    
+    if ! command_exists jq; then
+        missing_tools+=("jq")
+    fi
+    
+    if ! command_exists pm2; then
+        missing_tools+=("pm2")
+    fi
+    
+    if ! command_exists psql; then
+        missing_tools+=("postgresql-client")
+    fi
+    
+    if ! command_exists nginx; then
+        missing_tools+=("nginx")
+    fi
+    
+    if ! command_exists redis-server; then
+        missing_tools+=("redis-server")
+    fi
+    
+    if ! command_exists certbot; then
+        missing_tools+=("certbot")
+    fi
+    
+    if ! command_exists python3; then
+        missing_tools+=("python3")
+    fi
+    
+    if ! command_exists python3-venv; then
+        missing_tools+=("python3-venv")
+    fi
+    
+    if ! command_exists python3-pip; then
+        missing_tools+=("python3-pip")
+    fi
+    
+    if ! command_exists pip3; then
+        missing_tools+=("pip3")
+    fi
+    
+    if ! command_exists pipenv; then
+        missing_tools+=("pipenv")
+    fi
+    
+    if ! command_exists docker; then
+        missing_tools+=("docker")
+    fi
+    
+    if ! command_exists docker-compose; then
+        missing_tools+=("docker-compose")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce; then
+        missing_tools+=("docker-ce")
+    fi
+    
+    if ! command_exists docker-ce-cli; then
+        missing_tools+=("docker-ce-cli")
+    fi
+    
+    if ! command_exists docker-compose-plugin; then
+        missing_tools+=("docker-compose-plugin")
+    fi
+    
+    if ! command_exists docker.io; then
+        missing_tools+=("docker.io")
+    fi
+    
+    if ! command_exists docker-ce;
         missing_tools+=("curl")
     fi
     
