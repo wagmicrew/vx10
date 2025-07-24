@@ -89,10 +89,6 @@ setup_database() {
     read -p "Press Enter to continue..."
 }
 
-# GitHub Pull and Build Function Adjustments
-adjust_pull_functions() {
-    sed -i '/execute_with_user "cd /a if [[ ! -d "$project_dir" ]]; then error "Directory does not exist: $project_dir"; read -p "Press Enter..." -s line; return 1; fi' vx10-admin.sh
-}
 
 # VX10 Admin Script for Ubuntu
 # Author: VX10 Team
@@ -217,17 +213,17 @@ github_menu() {
         echo "3) Stash and pull"
         echo "4) Push and pull (with merge)"
         echo "5) Force pull (reset hard)"
-echo "6) Pull from specific branch"
+        echo "6) Pull from specific branch"
         echo "7) View git status"
-        echo "7) View git log"
-        echo "8) Switch branch"
-        echo "9) Create new branch"
-        echo "10) View remotes"
-        echo "11) Back to main menu"
+        echo "8) View git log"
+        echo "9) Switch branch"
+        echo "10) Create new branch"
+        echo "11) View remotes"
+        echo "12) Back to main menu"
         echo
-        read -p "Select option [1-11]: " choice
+        read -p "Select option [1-12]: " choice
         
-case $choice in
+        case $choice in
             1) github_pull ;;
             2) github_pull_build ;;
             3) github_stash_pull ;;
@@ -256,16 +252,16 @@ execute_with_user() {
 }
 
 github_pull() {
-    local project_dir=$(prompt_project_dir)
-    log "Pulling latest changes..."
+    local project_dir=$(pwd)
+    log "Pulling latest changes from current directory: $project_dir"
     
-    if [[ ! -d "$project_dir" ]]; then
-        error "Directory does not exist: $project_dir"
+    if [[ ! -d ".git" ]]; then
+        error "Current directory is not a git repository"
         read -p "Press Enter to continue..."
         return 1
     fi
     
-    execute_with_user "cd '$project_dir' && git fetch origin && git pull origin \$(git branch --show-current)"
+    git fetch origin && git pull origin $(git branch --show-current)
     success "Successfully pulled latest changes"
     read -p "Press Enter to continue..."
 }
@@ -525,7 +521,11 @@ pm2_status() {
 
 pm2_restart_all() {
     log "Restarting all PM2 processes..."
-    pm2 restart all
+    if [[ $IS_ROOT == true ]]; then
+        runuser -l "$DEPLOY_USER" -c "pm2 restart all"
+    else
+        pm2 restart all
+    fi
     success "All processes restarted"
     read -p "Press Enter to continue..."
 }
@@ -956,6 +956,33 @@ logs_clear() {
     read -p "Press Enter to continue..."
 }
 
+# Utilities Menu
+utilities_menu() {
+    while true; do
+        clear
+        echo -e "${MAGENTA}================================${NC}"
+        echo -e "${MAGENTA}     VX10 Utilities Menu       ${NC}"
+        echo -e "${MAGENTA}================================${NC}"
+        echo
+        echo "1) Clear cache (Next.js + npm)"
+        echo "2) Reinstall dependencies"
+        echo "3) Restart application"
+        echo "4) Setup database"
+        echo "5) Back to main menu"
+        echo
+        read -p "Select option [1-5]: " choice
+        
+        case $choice in
+            1) clear_cache ;;
+            2) reinstall_dependencies ;;
+            3) restart_application ;;
+            4) setup_database ;;
+            5) break ;;
+            *) error "Invalid option. Please try again." ;;
+        esac
+    done
+}
+
 # Main Menu
 main_menu() {
     while true; do
@@ -969,12 +996,13 @@ main_menu() {
         echo "3) Node.js Management"
         echo "4) Redis Management"
         echo "5) Log Viewer"
-        echo "6) System Info"
-        echo "7) Exit"
+        echo "6) Utilities"
+        echo "7) System Info"
+        echo "8) Exit"
         echo
         echo -e "${BLUE}Current project directory: $(get_project_dir)${NC}"
         echo
-        read -p "Select option [1-7]: " choice
+        read -p "Select option [1-8]: " choice
         
         case $choice in
             1) github_menu ;;
@@ -982,8 +1010,9 @@ main_menu() {
             3) node_menu ;;
             4) redis_menu ;;
             5) logs_menu ;;
-            6) system_info ;;
-            7) 
+            6) utilities_menu ;;
+            7) system_info ;;
+            8) 
                 log "Goodbye!"
                 exit 0
                 ;;
