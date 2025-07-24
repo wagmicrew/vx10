@@ -183,21 +183,8 @@ save_project_dir() {
 
 # Function to prompt for project directory
 prompt_project_dir() {
-    local current_dir=$(get_project_dir)
-    echo
-    echo "Current project directory: $current_dir"
-    read -p "Enter project directory [$current_dir]: " new_dir
-    if [[ -n "$new_dir" ]]; then
-        if [[ -d "$new_dir" ]]; then
-            save_project_dir "$new_dir"
-            echo "$new_dir"
-        else
-            error "Directory does not exist: $new_dir"
-            exit 1
-        fi
-    else
-        echo "$current_dir"
-    fi
+    local current_dir=$(pwd)
+    echo "$current_dir"
 }
 
 # GitHub Management Functions
