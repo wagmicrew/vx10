@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,7 +49,29 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Fel e-postadress eller lösenord")
       } else {
-        router.push("/dashboard")
+        // Get the updated session to access user role
+        const session = await getSession()
+        
+        if (session?.user?.role) {
+          // Redirect based on user role
+          switch (session.user.role) {
+            case "ADMIN":
+              router.push("/admin")
+              break
+            case "TEACHER":
+              router.push("/teacher")
+              break
+            case "STUDENT":
+              router.push("/student")
+              break
+            default:
+              // Fallback to student dashboard for unknown roles
+              router.push("/student")
+          }
+        } else {
+          // Fallback if no role is found
+          router.push("/student")
+        }
       }
     } catch {
       setError("Ett fel inträffade vid inloggning")
