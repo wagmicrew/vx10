@@ -135,7 +135,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Ensure www-data is owner and setup user context
+# Enhanced user context setup with better error handling
 setup_user_context() {
     if [[ $EUID -eq 0 ]]; then
         warning "Running as root. Will use vx10 user context."
@@ -151,11 +151,20 @@ setup_user_context() {
         DEPLOY_HOME="/home/vx10"
         IS_ROOT=true
         
-        # Ensure proper permissions
-        mkdir -p /var/www
-        chown vx10:vx10 /var/www
-        # Ensure www-data owns the project directory
-        sudo chown -R www-data:www-data /var/www/vx10
+        # Check if Node.js is available system-wide first
+        if command -v node &>/dev/null; then
+            log "Node.js already available system-wide: $(node --version)"
+        else
+            log "Node.js not found. Please install Node.js manually."
+            warning "You can install it with: curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs"
+        fi
+        
+        # Check if PM2 is available for vx10 user
+        if sudo -u vx10 bash -c 'command -v pm2' &>/dev/null; then
+            log "PM2 already available for vx10 user"
+        else
+            log "PM2 not found for vx10 user. Will install if needed."
+        fi
         
     else
         DEPLOY_USER="$USER"
@@ -163,25 +172,26 @@ setup_user_context() {
         IS_ROOT=false
     fi
 
-    # Set permissions
-    sudo find /var/www/vx10 -type d -exec chmod 755 {} \;
-    sudo find /var/www/vx10 -type f -exec chmod 644 {} \;
-
     log "Using deploy user: $DEPLOY_USER"
     log "Deploy home: $DEPLOY_HOME"
-
-    # Switch to www-data if necessary for permission-sensitive operations
-    # Only do this for operations that need file access rights, not for the whole script
+    
+    # Fix permissions function - work with current directory
     fix_permissions() {
-        if [[ -d "/var/www/vx10" ]]; then
-            sudo chown -R www-data:www-data /var/www/vx10
-            sudo find /var/www/vx10 -type d -exec chmod 755 {} \;
-            sudo find /var/www/vx10 -type f -exec chmod 644 {} \;
-            log "Fixed permissions for /var/www/vx10"
+        local current_dir="$(pwd)"
+        if [[ -d "$current_dir" ]]; then
+            log "Fixing permissions for $current_dir..."
+            sudo chown -R www-data:www-data "$current_dir" 2>/dev/null || true
+            sudo find "$current_dir" -type d -exec chmod 755 {} \; 2>/dev/null || true
+            sudo find "$current_dir" -type f -exec chmod 644 {} \; 2>/dev/null || true
+            # Ensure vx10 user can still work with the files
+            sudo chmod -R g+w "$current_dir" 2>/dev/null || true
+            if id "vx10" &>/dev/null; then
+                sudo usermod -aG www-data vx10 2>/dev/null || true
+            fi
+            log "Fixed permissions for $current_dir"
         fi
     }
     
-    # Run fix permissions
     fix_permissions
 }
 
@@ -1081,12 +1091,16 @@ system_info() {
     read -p "Press Enter to continue..."
 }
 
-# Check prerequisites
+# Add a quick setup check function
 check_prerequisites() {
     local missing_tools=()
     
     if ! command_exists git; then
         missing_tools+=("git")
+    fi
+    
+    if ! command_exists node; then
+        missing_tools+=("nodejs")
     fi
     
     if ! command_exists npm; then
@@ -1099,9 +1113,16 @@ check_prerequisites() {
     
     if [[ ${#missing_tools[@]} -gt 0 ]]; then
         error "Missing required tools: ${missing_tools[*]}"
-        log "Installing missing tools..."
-        sudo apt-get update
-        sudo apt-get install -y "${missing_tools[@]}"
+        read -p "Install missing tools now? (y/N): " install_confirm
+        if [[ "$install_confirm" =~ ^[Yy]$ ]]; then
+            log "Installing missing tools..."
+            sudo apt-get update -qq
+            sudo apt-get install -y "${missing_tools[@]}"
+        else
+            warning "Some features may not work without these tools."
+        fi
+    else
+        log "All prerequisites are available."
     fi
 }
 
