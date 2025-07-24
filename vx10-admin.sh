@@ -1,5 +1,99 @@
 #!/bin/bash
 
+# Function to clear cache
+clear_cache() {
+    local project_dir=$(prompt_project_dir)
+    cd "$project_dir"
+    
+    log "Clearing Next.js cache..."
+    rm -rf .next/cache
+    
+    log "Clearing npm cache..."
+    npm cache clean --force
+    success "Cache cleared"
+    read -p "Press Enter to continue..."
+}
+
+# Function to install or reinstall dependencies
+reinstall_dependencies() {
+    local project_dir=$(prompt_project_dir)
+    cd "$project_dir"
+
+    log "Installing/reinstalling dependencies..."
+    rm -rf node_modules package-lock.json
+    npm ci
+    success "Dependencies installed"
+    read -p "Press Enter to continue..."
+}
+
+# Function to restart the application
+restart_application() {
+    log "Restarting application..."
+    pm2 restart all
+    success "Application restarted"
+    read -p "Press Enter to continue..."
+}
+
+# Function to pull from a specific branch and build
+github_pull_specific_branch() {
+    local project_dir=$(prompt_project_dir)
+    cd "$project_dir"
+    
+    read -p "Enter branch name to pull from: " branch_name
+    if [[ -z "$branch_name" ]]; then
+        error "No branch name entered"
+        return 1
+    fi
+    
+    log "Pulling from branch $branch_name..."
+    git fetch origin
+    git checkout "$branch_name" || git checkout -b "$branch_name"
+    git pull origin "$branch_name"
+    
+    log "Installing dependencies..."
+    npm ci
+    
+    log "Building project..."
+    npm run build
+    
+    success "Pulled and built from branch $branch_name"
+    read -p "Press Enter to continue..."
+}
+
+# Function to setup database
+setup_database() {
+    local db_choice
+    read -p "Use local PostgreSQL (1) or Supabase (2)? Enter 1 or 2: " db_choice
+    if [[ "$db_choice" == "1" ]]; then
+        info "Setting up local PostgreSQL..."
+        # Assumes Ubuntu with PostgreSQL
+        if ! command_exists psql; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql postgresql-contrib
+            sudo systemctl start postgresql
+            sudo systemctl enable postgresql
+        fi
+        log "Creating database and user..."
+        sudo -u postgres psql -c "CREATE DATABASE vx10db;"
+        sudo -u postgres psql -c "CREATE USER vx10user WITH ENCRYPTED PASSWORD 'vx10pass';"
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE vx10db TO vx10user;"
+        success "Local PostgreSQL setup completed"
+    elif [[ "$db_choice" == "2" ]]; then
+        info "Configuring Supabase..."
+        # Placeholder for Supabase setup
+        warning "Supabase setup is not implemented in this script yet."
+    else
+        error "Invalid choice"
+        return 1
+    fi
+    read -p "Press Enter to continue..."
+}
+
+# GitHub Pull and Build Function Adjustments
+adjust_pull_functions() {
+    sed -i '/execute_with_user "cd /a if [[ ! -d "$project_dir" ]]; then error "Directory does not exist: $project_dir"; read -p "Press Enter..." -s line; return 1; fi' vx10-admin.sh
+}
+
 # VX10 Admin Script for Ubuntu
 # Author: VX10 Team
 # Description: Comprehensive admin script for managing VX10 deployment
@@ -123,7 +217,8 @@ github_menu() {
         echo "3) Stash and pull"
         echo "4) Push and pull (with merge)"
         echo "5) Force pull (reset hard)"
-        echo "6) View git status"
+echo "6) Pull from specific branch"
+        echo "7) View git status"
         echo "7) View git log"
         echo "8) Switch branch"
         echo "9) Create new branch"
@@ -132,18 +227,19 @@ github_menu() {
         echo
         read -p "Select option [1-11]: " choice
         
-        case $choice in
+case $choice in
             1) github_pull ;;
             2) github_pull_build ;;
             3) github_stash_pull ;;
             4) github_push_pull ;;
             5) github_force_pull ;;
-            6) github_status ;;
-            7) github_log ;;
-            8) github_switch_branch ;;
-            9) github_create_branch ;;
-            10) github_remotes ;;
-            11) break ;;
+            6) github_pull_specific_branch ;;
+            7) github_status ;;
+            8) github_log ;;
+            9) github_switch_branch ;;
+            10) github_create_branch ;;
+            11) github_remotes ;;
+            12) break ;;
             *) error "Invalid option. Please try again." ;;
         esac
     done
