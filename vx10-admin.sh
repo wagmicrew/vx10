@@ -646,19 +646,17 @@ node_menu() {
 
 node_check_deps() {
     local project_dir=$(prompt_project_dir)
-    cd "$project_dir"
     
     log "Checking dependencies..."
-    npm list --depth=0
+    execute_with_user "cd '$project_dir' && npm list --depth=0"
     read -p "Press Enter to continue..."
 }
 
 node_install_deps() {
     local project_dir=$(prompt_project_dir)
-    cd "$project_dir"
     
     log "Installing dependencies..."
-    npm ci
+    execute_with_user "cd '$project_dir' && npm ci"
     success "Dependencies installed"
     read -p "Press Enter to continue..."
 }
@@ -696,16 +694,19 @@ node_clean_cache() {
 
 node_clean_reinstall() {
     local project_dir=$(prompt_project_dir)
-    cd "$project_dir"
     
     warning "This will delete node_modules and package-lock.json!"
     read -p "Are you sure? (y/N): " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         log "Cleaning node_modules..."
-        rm -rf node_modules package-lock.json
+        execute_with_user "cd '$project_dir' && rm -rf node_modules package-lock.json"
         
         log "Reinstalling dependencies..."
-        npm install
+        execute_with_user "cd '$project_dir' && npm install"
+        
+        # Fix permissions after install
+        fix_permissions
+        
         success "Clean reinstall completed"
     fi
     read -p "Press Enter to continue..."
@@ -713,10 +714,13 @@ node_clean_reinstall() {
 
 node_build() {
     local project_dir=$(prompt_project_dir)
-    cd "$project_dir"
     
     log "Building project..."
-    npm run build
+    execute_with_user "cd '$project_dir' && npm run build"
+    
+    # Fix permissions after build
+    fix_permissions
+    
     success "Build completed"
     read -p "Press Enter to continue..."
 }
