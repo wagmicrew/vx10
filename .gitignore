@@ -1,66 +1,41 @@
-# Dependencies
-node_modules/
-/.pnp
-.pnp.js
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Testing
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
 /coverage
 
-# Next.js
+# next.js
 /.next/
 /out/
 
-# Production
+# production
 /build
 
-# Misc
+# misc
 .DS_Store
 *.pem
 
-# Debug
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# Local env files
-.env*.local
-.env
+# env files (can opt-in for committing if needed)
+.env*
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# vercel
+.vercel
 
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local Netlify folder
-.netlify
-
-# Local development files
-*.local
-
-# Cache
-.cache/
-.temp/
-.tmp/
-
-# TypeScript declaration files
-*.d.ts
-!next-env.d.ts
-
-# Prisma generated files
-/src/generated/
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-node_modules
+# typescript
+*.tsbuildinfo
+next-env.d.ts
