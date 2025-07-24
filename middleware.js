@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 
-// Import our logger (need to use dynamic import for client-side compatibility)
-let logger;
-if (typeof window === 'undefined') {
-  // Server-side only
-  try {
-    logger = require('./utils/logger').logger;
-  } catch (error) {
-    console.error('Failed to load logger:', error);
-  }
-}
+// Simple console logger for middleware (Edge Runtime compatible)
+const logger = {
+  info: (message, data) => console.log(`[INFO] ${message}`, data),
+  debug: (message, data) => console.log(`[DEBUG] ${message}`, data),
+  warn: (message, data) => console.warn(`[WARN] ${message}`, data),
+  error: (message, data) => console.error(`[ERROR] ${message}`, data)
+};
 
 export function middleware(request) {
   const start = Date.now();

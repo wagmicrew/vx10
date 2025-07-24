@@ -53,6 +53,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
+  bookings      Booking[]
+  blockedSlots  BlockedSlot[]
 }
 
 model VerificationToken {
@@ -67,4 +69,90 @@ enum Role {
   ADMIN
   TEACHER
   STUDENT
+}
+
+// Lessons available for booking
+model Lesson {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int      // Duration in minutes
+  price       Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  bookings    Booking[]
+}
+
+// Admin settings for lesson timing
+model AdminSettings {
+  id              String @id @default(cuid())
+  settingKey      String @unique
+  settingValue    String
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Time slots that are blocked by admin
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  date      DateTime
+  startTime String   // Format: "HH:MM"
+  endTime   String   // Format: "HH:MM"
+  reason    String?
+  createdAt DateTime @default(now())
+  createdBy String
+  
+  // Relations
+  creator   User     @relation(fields: [createdBy], references: [id])
+}
+
+// Booking records
+model Booking {
+  id            String        @id @default(cuid())
+  lessonId      String
+  userId        String
+  date          DateTime
+  startTime     String        // Format: "HH:MM"
+  endTime       String        // Format: "HH:MM"
+  gearType      GearType
+  status        BookingStatus @default(PENDING)
+  totalPrice    Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod?
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentId     String?       // External payment ID from Qliro/Swish
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  lesson        Lesson        @relation(fields: [lessonId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+}
+
+enum GearType {
+  AUTOMATIC
+  MANUAL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  QLIRO
+  SWISH
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
 }

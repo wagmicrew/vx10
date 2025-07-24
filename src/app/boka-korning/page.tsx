@@ -1,14 +1,49 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ContactForm } from "@/components/contact-form"
-import { Calendar, Phone, Mail, Clock } from "lucide-react"
+import { Calendar, Phone, Mail, Clock, ArrowRight } from "lucide-react"
+import BookingFlow from "@/components/booking/BookingFlow"
+// import { CircularProgress } from "@mui/joy"
 
 export default function BookingPage() {
+  const { data: session, status } = useSession()
   const [showContactForm, setShowContactForm] = useState(false)
+  const [showBookingSystem, setShowBookingSystem] = useState(false)
+
+  // Show loading state while checking session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4 mx-auto"></div>
+          <p className="text-gray-600">Laddar...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If user wants to access booking system
+  if (showBookingSystem) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Suspense fallback={
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4 mx-auto"></div>
+              <p className="text-gray-600">Laddar bokningssystem...</p>
+            </div>
+          </div>
+        }>
+          <BookingFlow />
+        </Suspense>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -20,41 +55,43 @@ export default function BookingPage() {
               <p className="text-xl text-gray-600">Boka din körlektion enkelt online</p>
             </div>
 
-            {/* Coming Soon Notice */}
-            <Card className="p-8 mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            {/* Booking System Available */}
+            <Card className="p-8 mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
               <div className="text-center">
-                <Calendar className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Bokningssystem kommer snart!</h2>
-                <p className="text-gray-700 mb-6">Vi utvecklar ett enkelt bokningssystem där du kommer att kunna:</p>
+                <Calendar className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Bokningssystem nu tillgängligt!</h2>
+                <p className="text-gray-700 mb-6">Nu kan du enkelt boka dina körlektioner online:</p>
                 <div className="text-left space-y-2 mb-6">
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-gray-700">Boka och avboka lektioner online</span>
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <span className="text-gray-700">Välj lektion och växellådstyp</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                     <span className="text-gray-700">Se tillgängliga tider i realtid</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-gray-700">Välja instruktör och bil</span>
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <span className="text-gray-700">Betala direkt med Qliro eller Swish</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-gray-700">Betala direkt online</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-gray-700">Få påminnelser via SMS/e-post</span>
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <span className="text-gray-700">Få bekräftelse via e-post</span>
                   </div>
                 </div>
-                <Badge className="bg-blue-600 text-white text-lg px-4 py-2">Lanseras inom kort</Badge>
+                
+                <Button 
+                  onClick={() => setShowBookingSystem(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white text-lg px-8 py-3 w-full"
+                >
+                  Boka nu <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </div>
             </Card>
 
-            {/* Current Contact Options */}
+            {/* Alternative Contact Options */}
             <Card className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Under tiden - kontakta oss direkt</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Eller kontakta oss direkt</h3>
               <div className="space-y-4">
                 <div className="text-center">
                   <Phone className="w-8 h-8 text-red-600 mx-auto mb-2" />
@@ -89,7 +126,7 @@ export default function BookingPage() {
             {/* Information */}
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600">
-                När bokningssystemet lanseras kommer du att kunna boka lektioner dygnet runt, 7 dagar i veckan.
+                Bokningssystemet är tillgängligt dygnet runt, 7 dagar i veckan.
               </p>
             </div>
           </div>
