@@ -231,57 +231,127 @@ configure_postgresql() {
 # Function to configure PostgreSQL for local connections
 configure_pg_access() {
     log "Configuring PostgreSQL access..."
-    
+
     # Find PostgreSQL version and config directory
-    PG_VERSION=$(sudo -u postgres psql -t -c "SELECT version();" | grep -oP '\d+\.\d+' | head -1)
-    PG_CONFIG_DIR="/etc/postgresql/$PG_VERSION/main"
-    
-    if [[ ! -d "$PG_CONFIG_DIR" ]]; then
-        # Try alternative path
-        PG_CONFIG_DIR=$(find /etc/postgresql -name "postgresql.conf" -type f | head -1 | xargs dirname)
+    local pg_version
+    pg_version=$(execute_sudo "su - postgres -c \"psql -t -c \\\"SELECT version();\\\"\"" | grep -oP '\d+\.\d+' | head -1)
+
+    if [[ -z "$pg_version" ]]; then
+        # Fallback method
+        pg_version=$(psql --version | grep -oP '\d+\.\d+' | head -1)
     fi
-    
-    if [[ ! -d "$PG_CONFIG_DIR" ]]; then
+
+    log "Detected PostgreSQL version: $pg_version"
+
+    # Find config directory
+    local pg_config_dir="/etc/postgresql/$pg_version/main"
+
+    if [[ ! -d "$pg_config_dir" ]]; then
+        # Try alternative paths
+        for dir in /etc/postgresql/*/main /var/lib/postgresql/*/main; do
+            if [[ -d "$dir" && -f "$dir/postgresql.conf" ]]; then
+                pg_config_dir="$dir"
+                break
+            fi
+        done
+    fi
+
+    if [[ ! -d "$pg_config_dir" ]]; then
         error "Could not find PostgreSQL configuration directory"
+        log "Searched in: /etc/postgresql/$pg_version/main"
         return 1
     fi
-    
-    log "Found PostgreSQL config in: $PG_CONFIG_DIR"
-    
-    # Backup original files
-    execute_sudo "cp \"$PG_CONFIG_DIR/postgresql.conf\" \"$PG_CONFIG_DIR/postgresql.conf.backup\"" 2>/dev/null || true
-    execute_sudo "cp \"$PG_CONFIG_DIR/pg_hba.conf\" \"$PG_CONFIG_DIR/pg_hba.conf.backup\"" 2>/dev/null || true
 
-    # Configure postgresql.conf
-    execute_sudo "sed -i \"s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/\" \"$PG_CONFIG_DIR/postgresql.conf\""
-    execute_sudo "sed -i \"s/#port = 5432/port = 5432/\" \"$PG_CONFIG_DIR/postgresql.conf\""
+    log "Found PostgreSQL config in: $pg_config_dir"
+
+    # Backup original files
+    execute_sudo "cp \"$pg_config_dir/postgresql.conf\" \"$pg_config_dir/postgresql.conf.backup\"" 2>/dev/null || true
+    execute_sudo "cp \"$pg_config_dir/pg_hba.conf\" \"$pg_config_dir/pg_hba.conf.backup\"" 2>/dev/null || true
+
+    # Configure postgresql.conf for local connections
+    log "Configuring postgresql.conf..."
+    execute_sudo "sed -i \"s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/\" \"$pg_config_dir/postgresql.conf\""
+    execute_sudo "sed -i \"s/#port = 5432/port = 5432/\" \"$pg_config_dir/postgresql.conf\""
+    execute_sudo "sed -i \"s/#max_connections = 100/max_connections = 200/\" \"$pg_config_dir/postgresql.conf\""
+
+    # Enable logging for debugging
+    execute_sudo "sed -i \"s/#log_statement = 'none'/log_statement = 'all'/\" \"$pg_config_dir/postgresql.conf\""
+    execute_sudo "sed -i \"s/#log_min_duration_statement = -1/log_min_duration_statement = 1000/\" \"$pg_config_dir/postgresql.conf\""
 
     # Configure pg_hba.conf for local connections
-    execute_sudo "sed -i \"s/local   all             all                                     peer/local   all             all                                     md5/\" \"$PG_CONFIG_DIR/pg_hba.conf\""
+    log "Configuring pg_hba.conf..."
 
-    # Add specific rule for our user
-    if ! execute_sudo "grep -q \"$DB_USER\" \"$PG_CONFIG_DIR/pg_hba.conf\""; then
-        execute_sudo "echo \"local   $DB_NAME        $DB_USER                                md5\" >> \"$PG_CONFIG_DIR/pg_hba.conf\""
+    # Ensure md5 authentication for local connections
+    execute_sudo "sed -i \"s/local   all             all                                     peer/local   all             all                                     md5/\" \"$pg_config_dir/pg_hba.conf\""
+    execute_sudo "sed -i \"s/local   all             postgres                                peer/local   all             postgres                                md5/\" \"$pg_config_dir/pg_hba.conf\""
+
+    # Add specific rules for our database and user
+    if ! execute_sudo "grep -q \"local.*$DB_NAME.*$DB_USER\" \"$pg_config_dir/pg_hba.conf\""; then
+        execute_sudo "echo \"# VX10 Database Access\" >> \"$pg_config_dir/pg_hba.conf\""
+        execute_sudo "echo \"local   $DB_NAME        $DB_USER                                md5\" >> \"$pg_config_dir/pg_hba.conf\""
+        execute_sudo "echo \"host    $DB_NAME        $DB_USER        127.0.0.1/32            md5\" >> \"$pg_config_dir/pg_hba.conf\""
+        execute_sudo "echo \"host    $DB_NAME        $DB_USER        ::1/128                 md5\" >> \"$pg_config_dir/pg_hba.conf\""
     fi
 
     # Restart PostgreSQL to apply changes
+    log "Restarting PostgreSQL to apply configuration changes..."
     execute_sudo "systemctl restart postgresql"
-    sleep 3
-    
-    success "PostgreSQL access configured"
+
+    # Wait for PostgreSQL to be ready
+    local max_wait=30
+    local wait_count=0
+    while [[ $wait_count -lt $max_wait ]]; do
+        if execute_sudo "systemctl is-active postgresql" >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+        ((wait_count++))
+    done
+
+    if [[ $wait_count -ge $max_wait ]]; then
+        error "PostgreSQL failed to start after configuration changes"
+        return 1
+    fi
+
+    success "PostgreSQL access configured and service restarted"
 }
 
 # Function to test database connection
 test_database_connection() {
     log "Testing database connection..."
-    
-    # Test connection with our user
-    if PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" >/dev/null 2>&1; then
-        success "Database connection test successful"
-    else
-        error "Database connection test failed"
-        return 1
-    fi
+
+    # Wait for PostgreSQL to be fully ready
+    local max_attempts=30
+    local attempt=1
+
+    while [[ $attempt -le $max_attempts ]]; do
+        if PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" >/dev/null 2>&1; then
+            success "Database connection test successful"
+            return 0
+        fi
+
+        log "Connection attempt $attempt/$max_attempts failed, waiting..."
+        sleep 2
+        ((attempt++))
+    done
+
+    error "Database connection test failed after $max_attempts attempts"
+
+    # Diagnostic information
+    log "Running connection diagnostics..."
+    log "PostgreSQL service status:"
+    execute_sudo "systemctl status postgresql --no-pager -l" || true
+
+    log "PostgreSQL processes:"
+    ps aux | grep postgres | grep -v grep || true
+
+    log "Port 5432 status:"
+    execute_sudo "netstat -tlnp | grep 5432" || true
+
+    log "PostgreSQL logs (last 10 lines):"
+    execute_sudo "journalctl -u postgresql -n 10 --no-pager" || true
+
+    return 1
 }
 
 # Function to backup and update .env file
@@ -459,6 +529,67 @@ install_dependencies() {
     success "Dependencies installed"
 }
 
+# Function to ensure required npm scripts exist
+ensure_npm_scripts() {
+    log "Checking npm scripts..."
+
+    local package_json="$PROJECT_DIR/package.json"
+    if [[ ! -f "$package_json" ]]; then
+        error "package.json not found"
+        return 1
+    fi
+
+    # Check if Prisma scripts exist
+    local has_prisma_generate=$(grep -q '"prisma:generate"' "$package_json" && echo "true" || echo "false")
+    local has_prisma_push=$(grep -q '"prisma:push"' "$package_json" && echo "true" || echo "false")
+    local has_prisma_studio=$(grep -q '"prisma:studio"' "$package_json" && echo "true" || echo "false")
+
+    if [[ "$has_prisma_generate" == "false" || "$has_prisma_push" == "false" || "$has_prisma_studio" == "false" ]]; then
+        log "Adding missing Prisma scripts to package.json..."
+
+        # Create a temporary script to add missing scripts
+        local temp_script=$(mktemp)
+        cat > "$temp_script" << 'EOF'
+const fs = require('fs');
+const path = require('path');
+
+const packagePath = process.argv[2];
+const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+
+if (!packageJson.scripts) {
+    packageJson.scripts = {};
+}
+
+// Add Prisma scripts if they don't exist
+if (!packageJson.scripts['prisma:generate']) {
+    packageJson.scripts['prisma:generate'] = 'prisma generate';
+}
+
+if (!packageJson.scripts['prisma:push']) {
+    packageJson.scripts['prisma:push'] = 'prisma db push';
+}
+
+if (!packageJson.scripts['prisma:studio']) {
+    packageJson.scripts['prisma:studio'] = 'prisma studio';
+}
+
+if (!packageJson.scripts['prisma:migrate']) {
+    packageJson.scripts['prisma:migrate'] = 'prisma migrate dev';
+}
+
+fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+console.log('Added missing Prisma scripts to package.json');
+EOF
+
+        execute_with_user "cd '$PROJECT_DIR' && node '$temp_script' '$package_json'"
+        rm -f "$temp_script"
+
+        success "Added missing Prisma scripts to package.json"
+    else
+        success "All required npm scripts are present"
+    fi
+}
+
 # Function to handle Prisma operations
 setup_prisma() {
     log "Setting up Prisma..."
@@ -469,18 +600,43 @@ setup_prisma() {
         return 1
     fi
 
+    # Verify database connection before Prisma operations
+    log "Verifying database connection for Prisma..."
+    local connection_test=false
+    for i in {1..5}; do
+        if PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" >/dev/null 2>&1; then
+            connection_test=true
+            break
+        fi
+        log "Database connection attempt $i/5 failed, retrying..."
+        sleep 2
+    done
+
+    if [[ "$connection_test" != true ]]; then
+        error "Cannot connect to database for Prisma operations"
+        return 1
+    fi
+
     # Generate Prisma client
     log "Generating Prisma client..."
     execute_with_user "cd '$PROJECT_DIR' && npm run prisma:generate" || {
-        error "Failed to generate Prisma client"
-        return 1
+        warning "npm script failed, trying direct prisma command..."
+        execute_with_user "cd '$PROJECT_DIR' && npx prisma generate" || {
+            error "Failed to generate Prisma client"
+            return 1
+        }
     }
 
     # Check if database already has tables
     local has_tables=false
+    log "Checking for existing database tables..."
     if PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -t -c "\dt" 2>/dev/null | grep -q "public"; then
         has_tables=true
         warning "Database already contains tables."
+
+        # Show existing tables
+        log "Existing tables:"
+        PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -c "\dt" 2>/dev/null || true
     fi
 
     # Handle schema application based on existing state
@@ -488,31 +644,51 @@ setup_prisma() {
         log "Database has existing tables. Checking schema compatibility..."
 
         # Try to introspect existing schema
-        execute_with_user "cd '$PROJECT_DIR' && npx prisma db pull" 2>/dev/null || true
+        execute_with_user "cd '$PROJECT_DIR' && npx prisma db pull" 2>/dev/null || {
+            warning "Could not introspect existing schema"
+        }
 
-        read -p "Do you want to reset the database schema? This will delete all data! (y/N): " reset_schema
-        if [[ "$reset_schema" =~ ^[Yy]$ ]]; then
-            log "Resetting database schema..."
-            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --force-reset" || {
-                error "Failed to reset schema"
-                return 1
-            }
-        else
-            log "Attempting to apply schema changes without data loss..."
-            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push" || {
-                warning "Schema push failed. You may need to handle migrations manually."
-                log "Try running: npm run prisma:migrate dev"
-                return 1
-            }
-        fi
+        echo
+        warning "Database contains existing tables. Choose an option:"
+        echo "1) Reset database (DELETE ALL DATA and apply new schema)"
+        echo "2) Try to apply schema without data loss (may fail if incompatible)"
+        echo "3) Skip schema application (use existing schema)"
+        echo
+        read -p "Enter your choice (1/2/3): " schema_choice
+
+        case $schema_choice in
+            1)
+                log "Resetting database schema..."
+                execute_with_user "cd '$PROJECT_DIR' && npx prisma db push --force-reset" || {
+                    error "Failed to reset schema"
+                    return 1
+                }
+                ;;
+            2)
+                log "Attempting to apply schema changes without data loss..."
+                execute_with_user "cd '$PROJECT_DIR' && npx prisma db push" || {
+                    warning "Schema push failed. Trying migration approach..."
+                    execute_with_user "cd '$PROJECT_DIR' && npx prisma migrate dev --name update_schema" || {
+                        error "Schema application failed. Manual intervention required."
+                        return 1
+                    }
+                }
+                ;;
+            3)
+                log "Skipping schema application, using existing schema"
+                ;;
+            *)
+                warning "Invalid choice, skipping schema application"
+                ;;
+        esac
     else
         # Fresh database, apply schema
         log "Applying schema to fresh database..."
-        execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push" || {
-            warning "Schema push failed, trying with accept-data-loss..."
-            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --accept-data-loss" || {
+        execute_with_user "cd '$PROJECT_DIR' && npx prisma db push" || {
+            warning "Schema push failed, trying with force reset..."
+            execute_with_user "cd '$PROJECT_DIR' && npx prisma db push --force-reset" || {
                 error "Failed to apply schema. Trying migration approach..."
-                execute_with_user "cd '$PROJECT_DIR' && npm run prisma:migrate dev --name init" || {
+                execute_with_user "cd '$PROJECT_DIR' && npx prisma migrate dev --name init" || {
                     error "All schema application methods failed. Manual intervention required."
                     return 1
                 }
@@ -520,7 +696,20 @@ setup_prisma() {
         }
     fi
 
-    success "Prisma schema applied to database"
+    # Verify schema was applied correctly
+    log "Verifying schema application..."
+    local table_count
+    table_count=$(PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null | xargs)
+
+    if [[ "$table_count" -gt 0 ]]; then
+        success "Prisma schema applied successfully ($table_count tables created)"
+
+        # Show created tables
+        log "Database tables:"
+        PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -c "\dt" 2>/dev/null || true
+    else
+        warning "No tables found after schema application"
+    fi
 }
 
 # Function to seed the database
@@ -537,6 +726,83 @@ seed_database() {
     fi
 }
 
+# Function to setup and test Prisma Studio
+setup_prisma_studio() {
+    log "Setting up Prisma Studio..."
+
+    # Verify Prisma Studio is available
+    if ! execute_with_user "cd '$PROJECT_DIR' && npx prisma studio --help" >/dev/null 2>&1; then
+        error "Prisma Studio is not available. Make sure Prisma is properly installed."
+        return 1
+    fi
+
+    # Create a script to easily start Prisma Studio
+    local studio_script="$PROJECT_DIR/start-prisma-studio.sh"
+    cat > "$studio_script" << 'EOF'
+#!/bin/bash
+
+# VX10 Prisma Studio Launcher
+# This script starts Prisma Studio for database administration
+
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_DIR"
+
+echo "Starting Prisma Studio..."
+echo "Database: vx10_db"
+echo "User: vx10user"
+echo "Studio will be available at: http://localhost:5555"
+echo ""
+echo "Press Ctrl+C to stop Prisma Studio"
+echo ""
+
+# Start Prisma Studio
+npx prisma studio
+EOF
+
+    chmod +x "$studio_script"
+
+    if [[ $IS_ROOT == true ]]; then
+        chown "$CURRENT_USER:$CURRENT_USER" "$studio_script"
+    fi
+
+    # Test Prisma Studio startup (briefly)
+    log "Testing Prisma Studio startup..."
+
+    # Start Prisma Studio in background for testing
+    local studio_pid
+    execute_with_user "cd '$PROJECT_DIR' && timeout 10s npx prisma studio --port 5555" >/dev/null 2>&1 &
+    studio_pid=$!
+
+    # Wait a moment for startup
+    sleep 3
+
+    # Check if it's running
+    if kill -0 $studio_pid 2>/dev/null; then
+        # Test if port 5555 is accessible
+        if curl -s http://localhost:5555 >/dev/null 2>&1; then
+            success "Prisma Studio test successful"
+        else
+            warning "Prisma Studio started but may not be accessible on port 5555"
+        fi
+
+        # Stop the test instance
+        kill $studio_pid 2>/dev/null || true
+        sleep 2
+    else
+        warning "Prisma Studio test startup failed, but it may still work manually"
+    fi
+
+    success "Prisma Studio setup completed"
+
+    # Provide usage instructions
+    echo
+    info "Prisma Studio Usage:"
+    info "  Manual start: cd $PROJECT_DIR && npx prisma studio"
+    info "  Script start: $studio_script"
+    info "  Access URL: http://localhost:5555"
+    info "  Stop: Press Ctrl+C in the terminal running Prisma Studio"
+}
+
 # Function to run comprehensive tests
 run_tests() {
     log "Running comprehensive tests..."
@@ -546,11 +812,30 @@ run_tests() {
 
     # Test Prisma connection
     log "Testing Prisma connection..."
-    if execute_with_user "cd '$PROJECT_DIR' && npm run prisma:studio --help" >/dev/null 2>&1; then
-        success "Prisma is properly configured"
+    if execute_with_user "cd '$PROJECT_DIR' && npx prisma --help" >/dev/null 2>&1; then
+        success "Prisma CLI is available"
     else
-        error "Prisma configuration test failed"
+        error "Prisma CLI test failed"
         return 1
+    fi
+
+    # Test Prisma Studio availability
+    log "Testing Prisma Studio availability..."
+    if execute_with_user "cd '$PROJECT_DIR' && npx prisma studio --help" >/dev/null 2>&1; then
+        success "Prisma Studio is available"
+    else
+        warning "Prisma Studio may not be available"
+    fi
+
+    # Test database schema
+    log "Testing database schema..."
+    local table_count
+    table_count=$(PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null | xargs)
+
+    if [[ "$table_count" -gt 0 ]]; then
+        success "Database schema is applied ($table_count tables found)"
+    else
+        warning "No tables found in database schema"
     fi
 
     # Test application build
@@ -583,13 +868,20 @@ show_completion_info() {
     echo
     info "Next Steps:"
     info "  1. Start your application: npm run dev"
-    info "  2. Access Prisma Studio: npm run prisma:studio"
-    info "  3. View your database at: http://localhost:5555"
+    info "  2. Access Prisma Studio: npx prisma studio"
+    info "  3. Use the studio script: ./start-prisma-studio.sh"
+    info "  4. View your database at: http://localhost:5555"
+    echo
+    info "Database Administration:"
+    info "  - Prisma Studio: npx prisma studio (web interface)"
+    info "  - Direct connection: psql -h localhost -U $DB_USER -d $DB_NAME"
+    info "  - Studio script: ./start-prisma-studio.sh"
     echo
     info "Useful Commands:"
-    info "  - Connect to database: psql -h localhost -U $DB_USER -d $DB_NAME"
-    info "  - Reset database: npm run prisma:push --force-reset"
-    info "  - Generate Prisma client: npm run prisma:generate"
+    info "  - Reset database: npx prisma db push --force-reset"
+    info "  - Generate Prisma client: npx prisma generate"
+    info "  - Database introspection: npx prisma db pull"
+    info "  - Create migration: npx prisma migrate dev --name <name>"
     echo
 }
 
@@ -674,8 +966,10 @@ main() {
     update_env_file
     fix_permissions
     install_dependencies
+    ensure_npm_scripts
     setup_prisma
     seed_database
+    setup_prisma_studio
     run_tests
 
     # Show completion information

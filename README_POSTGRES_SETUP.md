@@ -7,15 +7,22 @@ Complete automation script for setting up PostgreSQL locally on Ubuntu for the V
 ```bash
 # 1. Make scripts executable
 chmod +x setup-postgres-ubuntu.sh
-chmod +x test-postgres-setup.sh
+chmod +x test-database-setup.sh
 
-# 2. Run the setup
+# 2. Run the setup (works as root or regular user)
+sudo ./setup-postgres-ubuntu.sh
+# OR
 ./setup-postgres-ubuntu.sh
 
-# 3. Test the setup
-./test-postgres-setup.sh
+# 3. Test the complete setup
+./test-database-setup.sh
 
-# 4. Start your application
+# 4. Start Prisma Studio for database administration
+npx prisma studio
+# OR use the generated script
+./start-prisma-studio.sh
+
+# 5. Start your application
 npm run dev
 ```
 
@@ -83,6 +90,58 @@ After setup, your application will use:
 ```env
 DATABASE_URL="postgresql://vx10user:vx10password@localhost:5432/vx10_db"
 DIRECT_URL="postgresql://vx10user:vx10password@localhost:5432/vx10_db"
+```
+
+## 🎨 Prisma Studio - Database Administration
+
+The setup script now includes **Prisma Studio** for easy database administration:
+
+### 🚀 Starting Prisma Studio
+
+```bash
+# Method 1: Direct command
+npx prisma studio
+
+# Method 2: Use the generated launcher script
+./start-prisma-studio.sh
+
+# Method 3: npm script (if available)
+npm run prisma:studio
+```
+
+### 🌐 Accessing Prisma Studio
+
+- **URL**: http://localhost:5555
+- **Interface**: Web-based database administration
+- **Features**: View, edit, add, delete records
+- **Tables**: All your database tables with relationships
+
+### 📊 Prisma Studio Features
+
+- ✅ **Visual Database Browser** - See all tables and data
+- ✅ **Record Management** - Add, edit, delete records
+- ✅ **Relationship Navigation** - Follow foreign key relationships
+- ✅ **Query Interface** - Filter and search data
+- ✅ **Schema Visualization** - Understand your database structure
+- ✅ **Real-time Updates** - Changes reflect immediately
+
+### 🛠️ Database Management Commands
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Apply schema changes
+npx prisma db push
+
+# Reset database (careful - deletes all data!)
+npx prisma db push --force-reset
+
+# Create migration
+npx prisma migrate dev --name your_migration_name
+
+# Introspect existing database
+npx prisma db pull
 ```
 
 ## 🔍 Verification Commands
