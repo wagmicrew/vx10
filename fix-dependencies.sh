@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # Fix Dependencies Script for Ubuntu
 # Installs missing dependencies and resolves build issues
@@ -73,9 +73,9 @@ verify_installation() {
     
     for package in "${critical_packages[@]}"; do
         if [[ -d "node_modules/$package" ]]; then
-            log "âœ“ $package is installed"
+            log "✓ $package is installed"
         else
-            error "âœ— $package is missing"
+            error "✗ $package is missing"
             return 1
         fi
     done
@@ -91,9 +91,9 @@ fix_nextauth_issues() {
     if [[ -f "src/app/api/booking/create/route.js" ]]; then
         log "Fixing getServerSession import in booking/create/route.js..."
         
-        # Replace the import line and usage
-        sed -i 's/import { getServerSession } from \'next-auth\';/import { auth } from "@\/lib\/auth\/config";/' src/app/api/booking/create/route.js
-        sed -i 's/const session = await getServerSession();/const session = await auth();/' src/app/api/booking/create/route.js
+        # Replace the import line and usage using more portable sed
+        sed -i.bak 's/import { getServerSession } from '\''next-auth'\'';/import { auth } from "@\/lib\/auth\/config";/' src/app/api/booking/create/route.js
+        sed -i.bak 's/const session = await getServerSession();/const session = await auth();/' src/app/api/booking/create/route.js
         
         success "Fixed getServerSession import in booking create route"
     fi
@@ -104,7 +104,9 @@ fix_nextauth_issues() {
         
         # Check if auth export exists, if not, add it
         if ! grep -q "export.*auth" src/lib/auth/config.ts; then
-            echo -e "\n// NextAuth v5 export\nexport const { handlers, signIn, signOut, auth } = NextAuth(authOptions);" >> src/lib/auth/config.ts
+            echo "" >> src/lib/auth/config.ts
+            echo "// NextAuth v5 export" >> src/lib/auth/config.ts
+            echo "export const { handlers, signIn, signOut, auth } = NextAuth(authOptions);" >> src/lib/auth/config.ts
             success "Added NextAuth v5 auth export"
         fi
     fi
@@ -130,7 +132,7 @@ fix_edge_runtime_issues() {
         fi
         
         # Create a simplified edge-safe logger
-        cat > utils/edge-logger.js << 'EOF'
+        cat > utils/edge-logger.js << 'LOGGER_EOF'
 /**
  * Edge Runtime-Safe Logger for VX10
  * Simplified version that works in both Edge and Node.js environments
@@ -219,7 +221,7 @@ export default logger;
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { EdgeSafeLogger, logger };
 }
-EOF
+LOGGER_EOF
         success "Created edge-safe logger"
     fi
 }
@@ -321,7 +323,7 @@ main() {
     log "Testing build..."
     if test_build; then
         echo
-        success "ðŸŽ‰ All dependencies fixed and build successful!"
+        success "🎉 All dependencies fixed and build successful!"
         echo
         log "You can now run:"
         echo "  npm run dev    - Start development server"
@@ -329,7 +331,7 @@ main() {
         echo "  npm run start  - Start production server"
     else
         echo
-        error "âŒ Build failed. See troubleshooting tips below:"
+        error "❌ Build failed. See troubleshooting tips below:"
         troubleshooting_tips
         exit 1
     fi
