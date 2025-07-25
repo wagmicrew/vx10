@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { logger } from '@/utils/edge-logger';
-import { getServerSession } from 'next-auth';
+import { auth } from "@/lib/auth/config";
 import { parseISO } from 'date-fns';
 
 const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     
     if (!session || !session.user) {
       return NextResponse.json(

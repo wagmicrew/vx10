@@ -68,3 +68,6 @@ export const authOptions = {
     signIn: "/",
   },
 }
+
+// NextAuth v5 export
+export const { handlers, signIn, signOut, auth } = NextAuth(authOptions);

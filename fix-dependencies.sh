@@ -1,7 +1,8 @@
-#!/bin/bash
+﻿#!/bin/bash
 
-# Fix Dependencies Script
+# Fix Dependencies Script for Ubuntu
 # Installs missing dependencies and resolves build issues
+# Compatible with Ubuntu/Linux environments
 
 set -e
 
@@ -72,9 +73,9 @@ verify_installation() {
     
     for package in "${critical_packages[@]}"; do
         if [[ -d "node_modules/$package" ]]; then
-            log "✓ $package is installed"
+            log "âœ“ $package is installed"
         else
-            error "✗ $package is missing"
+            error "âœ— $package is missing"
             return 1
         fi
     done
@@ -82,17 +83,168 @@ verify_installation() {
     success "All critical packages are installed"
 }
 
-# Function to generate necessary files
-generate_files() {
-    log "Generating necessary files..."
+# Function to fix NextAuth getServerSession issues
+fix_nextauth_issues() {
+    log "Fixing NextAuth getServerSession issues..."
+    
+    # Fix the booking/create route.js to use proper NextAuth v5 syntax
+    if [[ -f "src/app/api/booking/create/route.js" ]]; then
+        log "Fixing getServerSession import in booking/create/route.js..."
+        
+        # Replace the import line and usage
+        sed -i 's/import { getServerSession } from \'next-auth\';/import { auth } from "@\/lib\/auth\/config";/' src/app/api/booking/create/route.js
+        sed -i 's/const session = await getServerSession();/const session = await auth();/' src/app/api/booking/create/route.js
+        
+        success "Fixed getServerSession import in booking create route"
+    fi
+    
+    # Create the auth export if it doesn't exist
+    if [[ -f "src/lib/auth/config.ts" ]]; then
+        log "Ensuring NextAuth v5 auth export exists..."
+        
+        # Check if auth export exists, if not, add it
+        if ! grep -q "export.*auth" src/lib/auth/config.ts; then
+            echo -e "\n// NextAuth v5 export\nexport const { handlers, signIn, signOut, auth } = NextAuth(authOptions);" >> src/lib/auth/config.ts
+            success "Added NextAuth v5 auth export"
+        fi
+    fi
+}
+
+# Function to fix edge runtime issues
+fix_edge_runtime_issues() {
+    log "Fixing Edge Runtime compatibility issues..."
+    
+    # Create edge-safe version of logger
+    if [[ -f "utils/edge-logger.js" ]]; then
+        log "Creating edge-safe logger backup..."
+        
+        # Backup the current logger to a Node.js specific version
+        cp utils/edge-logger.js utils/node-logger-backup.js
+        
+        # Use the new edge-safe logger if it exists
+        if [[ -f "utils/edge-logger-safe.js" ]]; then
+            log "Replacing edge-logger with safe version..."
+            cp utils/edge-logger-safe.js utils/edge-logger.js
+            success "Replaced edge-logger with safe version"
+            return
+        fi
+        
+        # Create a simplified edge-safe logger
+        cat > utils/edge-logger.js << 'EOF'
+/**
+ * Edge Runtime-Safe Logger for VX10
+ * Simplified version that works in both Edge and Node.js environments
+ */
+
+class EdgeSafeLogger {
+  constructor() {
+    this.isEdgeRuntime = typeof EdgeRuntime !== 'undefined';
+  }
+
+  getTimestamp() {
+    return new Date().toISOString();
+  }
+
+  formatMessage(level, message, extra = {}) {
+    const logEntry = {
+      timestamp: this.getTimestamp(),
+      level,
+      message,
+      runtime: this.isEdgeRuntime ? 'edge' : 'nodejs',
+      ...extra
+    };
+    return JSON.stringify(logEntry, null, 2);
+  }
+
+  log(level, message, extra = {}) {
+    const timestamp = this.getTimestamp();
+    const colors = {
+      ERROR: '\x1b[31m',
+      WARN: '\x1b[33m',
+      INFO: '\x1b[36m',
+      DEBUG: '\x1b[35m',
+      SUCCESS: '\x1b[32m',
+      RESET: '\x1b[0m'
+    };
+
+    if (this.isEdgeRuntime) {
+      switch (level) {
+        case 'ERROR':
+          console.error(`[${timestamp}] ERROR: ${message}`, extra);
+          break;
+        case 'WARN':
+          console.warn(`[${timestamp}] WARN: ${message}`, extra);
+          break;
+        case 'DEBUG':
+          console.debug(`[${timestamp}] DEBUG: ${message}`, extra);
+          break;
+        default:
+          console.log(`[${timestamp}] ${level}: ${message}`, extra);
+      }
+    } else {
+      const color = colors[level] || colors.RESET;
+      console.log(`${color}[${timestamp}] ${level}:${colors.RESET} ${message}`);
+      if (Object.keys(extra).length > 0) {
+        console.log(`${color}Extra:${colors.RESET}`, extra);
+      }
+    }
+  }
+
+  error(message, extra = {}) {
+    this.log('ERROR', message, extra);
+  }
+
+  warn(message, extra = {}) {
+    this.log('WARN', message, extra);
+  }
+
+  info(message, extra = {}) {
+    this.log('INFO', message, extra);
+  }
+
+  debug(message, extra = {}) {
+    this.log('DEBUG', message, extra);
+  }
+
+  success(message, extra = {}) {
+    this.log('SUCCESS', message, extra);
+  }
+}
+
+const logger = new EdgeSafeLogger();
+
+export { EdgeSafeLogger, logger };
+export default logger;
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { EdgeSafeLogger, logger };
+}
+EOF
+        success "Created edge-safe logger"
+    fi
+}
+
+# Function to fix Prisma client issues
+fix_prisma_issues() {
+    log "Fixing Prisma client issues..."
     
     # Generate Prisma client if schema exists
     if [[ -f "prisma/schema.prisma" ]]; then
         log "Generating Prisma client..."
         npx prisma generate
+        success "Prisma client generated"
+    else
+        warning "No Prisma schema found, skipping Prisma client generation"
     fi
+}
+
+generate_files() {
+    log "Generating necessary files..."
     
-    # Create .env.local if it doesn't exist
+    fix_nextauth_issues
+    fix_edge_runtime_issues
+    fix_prisma_issues
+    
     if [[ ! -f ".env.local" ]] && [[ -f ".env.example" ]]; then
         log "Creating .env.local from .env.example..."
         cp .env.example .env.local
@@ -169,7 +321,7 @@ main() {
     log "Testing build..."
     if test_build; then
         echo
-        success "🎉 All dependencies fixed and build successful!"
+        success "ðŸŽ‰ All dependencies fixed and build successful!"
         echo
         log "You can now run:"
         echo "  npm run dev    - Start development server"
@@ -177,7 +329,7 @@ main() {
         echo "  npm run start  - Start production server"
     else
         echo
-        error "❌ Build failed. See troubleshooting tips below:"
+        error "âŒ Build failed. See troubleshooting tips below:"
         troubleshooting_tips
         exit 1
     fi
