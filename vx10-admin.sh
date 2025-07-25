@@ -1490,17 +1490,38 @@ main_menu() {
     done
 }
 
+
+# Add a quick setup check function
+check_prerequisites() {
+    local missing_tools=()
+    if ! command_exists git; then
+        missing_tools+=("git")
+    fi
+    if ! command_exists node; then
+        missing_tools+=("nodejs")
+    fi
+    if ! command_exists npm; then
+        missing_tools+=("npm")
+    fi
+    if ! command_exists pm2; then
+        missing_tools+=("pm2")
+    fi
+    if ! command_exists psql; then
+        missing_tools+=("postgresql-client")
+    fi
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        error "Missing prerequisites: ${missing_tools[*]}"
+        exit 1
+    else
+        log "All prerequisites are available."
+    fi
+}
+
 # Main execution
 main() {
     log "Starting VX10 Admin Panel..."
-
-    # Setup user context and permissions
     setup_user_context
-
-    # Check prerequisites
     check_prerequisites
-
-    # Start main menu
     main_menu
 }
 
