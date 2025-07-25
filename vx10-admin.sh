@@ -264,7 +264,13 @@ github_pull_specific_branch() {
     fi
     
     log "Building project..."
-    execute_with_user "cd '$project_dir' && npm run build"
+    if [[ -f "$project_dir/node_modules/.bin/next" ]]; then
+        execute_with_user "cd '$project_dir' && npx next build"
+    else
+        error "Next.js binary not found after install. Please run 'npm install next' in $project_dir."
+        read -p "Press Enter to continue..."
+        return 1
+    fi
     
     success "Pulled and built from branch $branch_name"
     read -p "Press Enter to continue..."
@@ -986,23 +992,24 @@ node_build() {
     
     # Use npx to ensure we use the local version
     log "Building with Next.js..."
-    execute_with_user "cd '$project_dir' && npx next build"
-    
-    if [[ $? -eq 0 ]]; then
-        success "Build completed successfully"
-    else
-        error "Build failed"
-        log "Trying to diagnose the issue..."
-        
-        # Check if it's a permission issue
-        if [[ ! -x "$project_dir/node_modules/.bin/next" ]]; then
-            warning "Next.js binary is not executable. Fixing permissions..."
-            fix_node_modules_permissions "$project_dir"
-            log "Retrying build..."
-            execute_with_user "cd '$project_dir' && npx next build"
+    if [[ -f "$project_dir/node_modules/.bin/next" ]]; then
+        execute_with_user "cd '$project_dir' && npx next build"
+        if [[ $? -eq 0 ]]; then
+            success "Build completed successfully"
+        else
+            error "Build failed"
+            log "Trying to diagnose the issue..."
+            # Check if it's a permission issue
+            if [[ ! -x "$project_dir/node_modules/.bin/next" ]]; then
+                warning "Next.js binary is not executable. Fixing permissions..."
+                fix_node_modules_permissions "$project_dir"
+                log "Retrying build..."
+                execute_with_user "cd '$project_dir' && npx next build"
+            fi
         fi
+    else
+        error "Next.js binary not found after install. Please run 'npm install next' in $project_dir."
     fi
-    
     read -p "Press Enter to continue..."
 }
 
