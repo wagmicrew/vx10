@@ -14,12 +14,7 @@ export default async function DatabaseSetupPage() {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <SupabaseSetup 
-        onSetupComplete={() => {
-          // This will be handled client-side
-          window.location.href = '/'
-        }}
-      />
+      <SupabaseSetup />
     </Suspense>
   )
 }

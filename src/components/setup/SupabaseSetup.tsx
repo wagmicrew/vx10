@@ -172,7 +172,12 @@ export default function SupabaseSetup({ onSetupComplete }: SupabaseSetupProps) {
       
       // Setup complete
       setTimeout(() => {
-        onSetupComplete?.()
+        if (onSetupComplete) {
+          onSetupComplete()
+        } else {
+          // Default redirect behavior
+          window.location.href = '/'
+        }
       }, 1000)
       
     } catch (error) {

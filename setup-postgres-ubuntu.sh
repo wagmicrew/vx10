@@ -51,7 +51,7 @@ success() {
 # Function to check user privileges and set up user context
 check_user_context() {
     if [[ $EUID -eq 0 ]]; then
-        warning "Running as root. Will create a deployment user for safe operations."
+        warning "Running as root. Will create/configure a deployment user for safe operations."
 
         # Create deployment user if it doesn't exist
         DEPLOY_USER="vx10deploy"
@@ -62,11 +62,22 @@ check_user_context() {
 
             # Set a temporary password
             echo "$DEPLOY_USER:vx10deploy123" | chpasswd
-            log "Created user $DEPLOY_USER with password: vx10deploy123"
+            success "Created user $DEPLOY_USER with password: vx10deploy123"
+        else
+            warning "Deployment user '$DEPLOY_USER' already exists. Updating configuration..."
+
+            # Ensure user has proper groups
+            usermod -aG sudo "$DEPLOY_USER" 2>/dev/null || true
+
+            # Reset password to known value
+            echo "$DEPLOY_USER:vx10deploy123" | chpasswd
+            log "Reset password for existing user: $DEPLOY_USER"
+            success "Updated existing deployment user: $DEPLOY_USER"
         fi
 
         # Set project ownership to deployment user
         if [[ -d "$PROJECT_DIR" ]]; then
+            log "Setting project ownership to deployment user..."
             chown -R "$DEPLOY_USER:$DEPLOY_USER" "$PROJECT_DIR"
         fi
 
@@ -155,6 +166,18 @@ install_postgresql() {
     success "PostgreSQL installed and started"
 }
 
+# Function to check if PostgreSQL user exists
+check_pg_user_exists() {
+    local user="$1"
+    execute_sudo "su - postgres -c \"psql -t -c \\\"SELECT 1 FROM pg_roles WHERE rolname='$user';\\\"\"" | grep -q 1
+}
+
+# Function to check if PostgreSQL database exists
+check_pg_database_exists() {
+    local database="$1"
+    execute_sudo "su - postgres -c \"psql -t -c \\\"SELECT 1 FROM pg_database WHERE datname='$database';\\\"\"" | grep -q 1
+}
+
 # Function to configure PostgreSQL
 configure_postgresql() {
     log "Configuring PostgreSQL..."
@@ -162,19 +185,44 @@ configure_postgresql() {
     # Set postgres user password (for administrative tasks)
     execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER postgres PASSWORD 'postgres';\\\"\""  2>/dev/null || true
 
-    # Create database user
-    log "Creating database user: $DB_USER"
-    execute_sudo "su - postgres -c \"psql -c \\\"DROP USER IF EXISTS $DB_USER;\\\"\""  2>/dev/null || true
-    execute_sudo "su - postgres -c \"psql -c \\\"CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\\\"\""
-    execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER CREATEDB;\\\"\""
-    execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER WITH SUPERUSER;\\\"\""  # Needed for some Prisma operations
+    # Handle database user
+    if check_pg_user_exists "$DB_USER"; then
+        warning "Database user '$DB_USER' already exists. Updating configuration..."
+        log "Resetting password for user: $DB_USER"
+        execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\\\"\""
+        execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER CREATEDB;\\\"\""
+        execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER WITH SUPERUSER;\\\"\""
+        success "Updated existing database user: $DB_USER"
+    else
+        log "Creating database user: $DB_USER"
+        execute_sudo "su - postgres -c \"psql -c \\\"CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\\\"\""
+        execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER CREATEDB;\\\"\""
+        execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER WITH SUPERUSER;\\\"\""
+        success "Created new database user: $DB_USER"
+    fi
 
-    # Create database
-    log "Creating database: $DB_NAME"
-    execute_sudo "su - postgres -c \"psql -c \\\"DROP DATABASE IF EXISTS $DB_NAME;\\\"\""  2>/dev/null || true
-    execute_sudo "su - postgres -c \"psql -c \\\"CREATE DATABASE $DB_NAME OWNER $DB_USER;\\\"\""
+    # Handle database
+    if check_pg_database_exists "$DB_NAME"; then
+        warning "Database '$DB_NAME' already exists."
+        read -p "Do you want to recreate the database? This will delete all existing data! (y/N): " recreate_db
+        if [[ "$recreate_db" =~ ^[Yy]$ ]]; then
+            log "Dropping and recreating database: $DB_NAME"
+            execute_sudo "su - postgres -c \"psql -c \\\"DROP DATABASE $DB_NAME;\\\"\""
+            execute_sudo "su - postgres -c \"psql -c \\\"CREATE DATABASE $DB_NAME OWNER $DB_USER;\\\"\""
+            success "Recreated database: $DB_NAME"
+        else
+            log "Keeping existing database: $DB_NAME"
+            # Ensure the user owns the database
+            execute_sudo "su - postgres -c \"psql -c \\\"ALTER DATABASE $DB_NAME OWNER TO $DB_USER;\\\"\""
+            success "Updated database ownership: $DB_NAME"
+        fi
+    else
+        log "Creating database: $DB_NAME"
+        execute_sudo "su - postgres -c \"psql -c \\\"CREATE DATABASE $DB_NAME OWNER $DB_USER;\\\"\""
+        success "Created new database: $DB_NAME"
+    fi
 
-    # Grant all privileges
+    # Grant all privileges (always do this to ensure proper permissions)
     execute_sudo "su - postgres -c \"psql -c \\\"GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;\\\"\""
 
     success "PostgreSQL configured with user: $DB_USER and database: $DB_NAME"
@@ -239,18 +287,60 @@ test_database_connection() {
 # Function to backup and update .env file
 update_env_file() {
     log "Updating .env file..."
-    
-    # Create backup of existing .env file
-    if [[ -f "$ENV_FILE" ]]; then
-        cp "$ENV_FILE" "$BACKUP_ENV_FILE"
-        log "Backed up existing .env to: $BACKUP_ENV_FILE"
-    fi
-    
+
     # Database connection strings
     DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME"
     DIRECT_URL="postgresql://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME"
-    
-    # Create or update .env file
+
+    # Handle existing .env file
+    if [[ -f "$ENV_FILE" ]]; then
+        cp "$ENV_FILE" "$BACKUP_ENV_FILE"
+        log "Backed up existing .env to: $BACKUP_ENV_FILE"
+
+        # Check if .env already has database configuration
+        if grep -q "DATABASE_URL.*postgresql" "$ENV_FILE" 2>/dev/null; then
+            warning "Existing .env file already contains database configuration."
+            read -p "Do you want to update the database URLs? (Y/n): " update_urls
+            if [[ "$update_urls" =~ ^[Nn]$ ]]; then
+                log "Keeping existing database configuration"
+                return 0
+            fi
+        fi
+
+        # Update existing .env file by replacing database URLs
+        log "Updating database URLs in existing .env file..."
+
+        # Create temporary file with updated content
+        local temp_env=$(mktemp)
+
+        # Copy existing content, replacing database URLs
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^DATABASE_URL= ]]; then
+                echo "DATABASE_URL=\"$DATABASE_URL\""
+            elif [[ "$line" =~ ^DIRECT_URL= ]]; then
+                echo "DIRECT_URL=\"$DIRECT_URL\""
+            else
+                echo "$line"
+            fi
+        done < "$ENV_FILE" > "$temp_env"
+
+        # Add database URLs if they weren't present
+        if ! grep -q "^DATABASE_URL=" "$temp_env"; then
+            echo "DATABASE_URL=\"$DATABASE_URL\"" >> "$temp_env"
+        fi
+        if ! grep -q "^DIRECT_URL=" "$temp_env"; then
+            echo "DIRECT_URL=\"$DIRECT_URL\"" >> "$temp_env"
+        fi
+
+        # Replace original file
+        mv "$temp_env" "$ENV_FILE"
+
+        success "Updated existing .env file with new database configuration"
+        return 0
+    fi
+
+    # Create new .env file
+    log "Creating new .env file..."
     cat > "$ENV_FILE" << EOF
 # Local PostgreSQL Configuration
 DATABASE_URL="$DATABASE_URL"
@@ -320,6 +410,8 @@ install_dependencies() {
         log "Installing Node.js..."
         execute_sudo "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -"
         execute_sudo "apt-get install -y nodejs"
+    else
+        log "Node.js already installed: $(node --version)"
     fi
 
     # Check if npm is available
@@ -331,12 +423,35 @@ install_dependencies() {
     log "Node.js version: $(node --version)"
     log "npm version: $(npm --version)"
 
-    # Clear npm cache
+    # Handle npm cache and permission issues
+    log "Cleaning npm cache and fixing permissions..."
     execute_with_user "cd '$PROJECT_DIR' && npm cache clean --force" 2>/dev/null || true
 
-    # Install dependencies
+    # Fix npm permissions for the user
+    if [[ $IS_ROOT == true ]]; then
+        # Create npm global directory for deployment user
+        execute_with_user "mkdir -p /home/$CURRENT_USER/.npm-global" 2>/dev/null || true
+        execute_with_user "npm config set prefix '/home/$CURRENT_USER/.npm-global'" 2>/dev/null || true
+    fi
+
+    # Remove existing node_modules if there are permission issues
+    if [[ -d "$PROJECT_DIR/node_modules" ]]; then
+        log "Checking node_modules permissions..."
+        if ! execute_with_user "cd '$PROJECT_DIR' && test -w node_modules" 2>/dev/null; then
+            warning "node_modules has permission issues. Removing and reinstalling..."
+            rm -rf "$PROJECT_DIR/node_modules" 2>/dev/null || true
+            rm -f "$PROJECT_DIR/package-lock.json" 2>/dev/null || true
+        fi
+    fi
+
+    # Install dependencies with error handling
+    log "Installing npm dependencies..."
     if [[ -f "$PROJECT_DIR/package-lock.json" ]]; then
-        execute_with_user "cd '$PROJECT_DIR' && npm ci"
+        execute_with_user "cd '$PROJECT_DIR' && npm ci" || {
+            warning "npm ci failed, trying npm install..."
+            rm -f "$PROJECT_DIR/package-lock.json" 2>/dev/null || true
+            execute_with_user "cd '$PROJECT_DIR' && npm install"
+        }
     else
         execute_with_user "cd '$PROJECT_DIR' && npm install"
     fi
@@ -348,23 +463,62 @@ install_dependencies() {
 setup_prisma() {
     log "Setting up Prisma..."
 
+    # Check if Prisma schema exists
+    if [[ ! -f "$PROJECT_DIR/prisma/schema.prisma" ]]; then
+        error "Prisma schema file not found at $PROJECT_DIR/prisma/schema.prisma"
+        return 1
+    fi
+
     # Generate Prisma client
     log "Generating Prisma client..."
-    execute_with_user "cd '$PROJECT_DIR' && npm run prisma:generate"
+    execute_with_user "cd '$PROJECT_DIR' && npm run prisma:generate" || {
+        error "Failed to generate Prisma client"
+        return 1
+    }
 
-    # Push schema to database (for development)
-    log "Pushing schema to database..."
-    execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --accept-data-loss" 2>/dev/null || {
-        warning "Schema push failed, trying with force reset..."
-        execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --force-reset" 2>/dev/null || {
-            error "Failed to push schema. Trying migration approach..."
-            # Try migration approach
-            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:migrate dev --name init" 2>/dev/null || {
-                error "Migration also failed. Manual intervention may be required."
+    # Check if database already has tables
+    local has_tables=false
+    if PGPASSWORD="$DB_PASSWORD" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -t -c "\dt" 2>/dev/null | grep -q "public"; then
+        has_tables=true
+        warning "Database already contains tables."
+    fi
+
+    # Handle schema application based on existing state
+    if [[ "$has_tables" == true ]]; then
+        log "Database has existing tables. Checking schema compatibility..."
+
+        # Try to introspect existing schema
+        execute_with_user "cd '$PROJECT_DIR' && npx prisma db pull" 2>/dev/null || true
+
+        read -p "Do you want to reset the database schema? This will delete all data! (y/N): " reset_schema
+        if [[ "$reset_schema" =~ ^[Yy]$ ]]; then
+            log "Resetting database schema..."
+            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --force-reset" || {
+                error "Failed to reset schema"
                 return 1
             }
+        else
+            log "Attempting to apply schema changes without data loss..."
+            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push" || {
+                warning "Schema push failed. You may need to handle migrations manually."
+                log "Try running: npm run prisma:migrate dev"
+                return 1
+            }
+        fi
+    else
+        # Fresh database, apply schema
+        log "Applying schema to fresh database..."
+        execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push" || {
+            warning "Schema push failed, trying with accept-data-loss..."
+            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --accept-data-loss" || {
+                error "Failed to apply schema. Trying migration approach..."
+                execute_with_user "cd '$PROJECT_DIR' && npm run prisma:migrate dev --name init" || {
+                    error "All schema application methods failed. Manual intervention required."
+                    return 1
+                }
+            }
         }
-    }
+    fi
 
     success "Prisma schema applied to database"
 }
@@ -443,19 +597,58 @@ show_completion_info() {
 cleanup_on_error() {
     error "Setup failed. Performing cleanup..."
 
+    # Show the specific error that occurred
+    log "Last command exit code: $?"
+
     # Restore .env backup if it exists
     if [[ -f "$BACKUP_ENV_FILE" ]]; then
         mv "$BACKUP_ENV_FILE" "$ENV_FILE"
         log "Restored .env file from backup"
     fi
 
-    # Optionally remove created database and user
-    read -p "Do you want to remove the created database and user? (y/N): " cleanup_db
-    if [[ "$cleanup_db" =~ ^[Yy]$ ]]; then
+    # Provide recovery options
+    echo
+    warning "Setup failed, but you have several recovery options:"
+    echo "1. Re-run the script (it will handle existing resources)"
+    echo "2. Continue with manual setup using the documentation"
+    echo "3. Clean up and start fresh"
+    echo
+
+    read -p "Do you want to clean up created resources? (y/N): " cleanup_resources
+    if [[ "$cleanup_resources" =~ ^[Yy]$ ]]; then
+        log "Cleaning up created resources..."
+
+        # Remove database and user
         execute_sudo "su - postgres -c \"psql -c \\\"DROP DATABASE IF EXISTS $DB_NAME;\\\"\""  2>/dev/null || true
         execute_sudo "su - postgres -c \"psql -c \\\"DROP USER IF EXISTS $DB_USER;\\\"\""  2>/dev/null || true
-        log "Database and user removed"
+
+        # Remove deployment user if created by this script
+        if [[ $IS_ROOT == true ]] && id "$DEPLOY_USER" &>/dev/null; then
+            read -p "Remove deployment user '$DEPLOY_USER'? (y/N): " remove_user
+            if [[ "$remove_user" =~ ^[Yy]$ ]]; then
+                userdel -r "$DEPLOY_USER" 2>/dev/null || true
+                log "Removed deployment user: $DEPLOY_USER"
+            fi
+        fi
+
+        # Remove node_modules if it has permission issues
+        if [[ -d "$PROJECT_DIR/node_modules" ]]; then
+            read -p "Remove node_modules directory? (y/N): " remove_modules
+            if [[ "$remove_modules" =~ ^[Yy]$ ]]; then
+                rm -rf "$PROJECT_DIR/node_modules" 2>/dev/null || true
+                rm -f "$PROJECT_DIR/package-lock.json" 2>/dev/null || true
+                log "Removed node_modules and package-lock.json"
+            fi
+        fi
+
+        success "Cleanup completed"
+    else
+        log "Resources preserved. You can re-run the script to continue setup."
     fi
+
+    echo
+    info "For manual recovery, see: README_POSTGRES_SETUP.md"
+    info "For troubleshooting, see: POSTGRES_SETUP_UBUNTU.md"
 }
 
 # Main execution function
