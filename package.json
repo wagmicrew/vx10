@@ -44,7 +44,13 @@
     "lucide-react": "^0.468.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",
-    "class-variance-authority": "^0.7.1"
+    "class-variance-authority": "^0.7.1",
+    "@mui/material": "^6.1.9",
+    "@mui/joy": "^5.0.0-beta.52",
+    "@mui/icons-material": "^6.1.9",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "sonner": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
