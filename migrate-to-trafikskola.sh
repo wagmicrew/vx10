@@ -3,7 +3,8 @@
 # Din Trafikskola HLM Migration Script
 # Migrates existing VX10 installation to new branding and structure
 
-set -e
+# Note: We don't use 'set -e' here because we want to handle errors gracefully
+# and continue with the migration process even if some steps fail
 
 # Colors for output
 RED='\033[0;31m'
@@ -128,28 +129,74 @@ migrate_project_directory() {
     # Create new project directory
     mkdir -p "$NEW_PROJECT_DIR"
     
-    # Copy all files from old to new directory using git
+    # Copy all files from old to new directory
     cd "$OLD_PROJECT_DIR"
     
     # Check if it's a git repository
     if [[ -d ".git" ]]; then
-        log "Syncing git repository to new location..."
+        log "Git repository detected. Fixing ownership and migrating..."
         
-        # Clone the repository to new location
-        git clone . "$NEW_PROJECT_DIR"
-        cd "$NEW_PROJECT_DIR"
+        # Fix git ownership issues first - handle errors gracefully
+        git config --global --add safe.directory "$OLD_PROJECT_DIR" 2>/dev/null || {
+            warning "Could not add safe directory for $OLD_PROJECT_DIR, continuing..."
+        }
+        git config --global --add safe.directory "$OLD_PROJECT_DIR/.git" 2>/dev/null || {
+            warning "Could not add safe directory for $OLD_PROJECT_DIR/.git, continuing..."
+        }
         
-        # Set proper ownership
+        # Copy all files including .git directory using rsync to preserve everything
+        log "Copying git repository with full history..."
+        if rsync -av --exclude='node_modules' --exclude='.next' --exclude='dist' --exclude='build' "$OLD_PROJECT_DIR/" "$NEW_PROJECT_DIR/"; then
+            log "Files copied successfully using rsync"
+        else
+            warning "Rsync failed, falling back to cp command"
+            cp -r "$OLD_PROJECT_DIR"/* "$NEW_PROJECT_DIR/" 2>/dev/null || {
+                error "Failed to copy files"
+                return 1
+            }
+            # Copy hidden files including .git
+            cp -r "$OLD_PROJECT_DIR"/.[^.]* "$NEW_PROJECT_DIR/" 2>/dev/null || true
+        fi
+        
+        # Set proper ownership on new directory
         chown -R "$NEW_USER:www-data" "$NEW_PROJECT_DIR"
         
-        # Fix git ownership
-        git config --global --add safe.directory "$NEW_PROJECT_DIR"
+        # Fix git ownership for new directory - handle errors gracefully
+        git config --global --add safe.directory "$NEW_PROJECT_DIR" 2>/dev/null || {
+            warning "Could not add safe directory for $NEW_PROJECT_DIR, continuing..."
+        }
+        git config --global --add safe.directory "$NEW_PROJECT_DIR/.git" 2>/dev/null || {
+            warning "Could not add safe directory for $NEW_PROJECT_DIR/.git, continuing..."
+        }
+        
+        # Set git config for the new user - handle errors gracefully
+        cd "$NEW_PROJECT_DIR"
+        sudo -u "$NEW_USER" git config --global --add safe.directory "$NEW_PROJECT_DIR" 2>/dev/null || {
+            warning "Could not set safe directory for new user, continuing..."
+        }
+        
+        # Reset any potential git state issues - handle errors gracefully
+        sudo -u "$NEW_USER" git reset --hard HEAD 2>/dev/null || {
+            warning "Could not reset git state, but this is not critical"
+        }
+        
+        # Verify git repository is working
+        if sudo -u "$NEW_USER" git status >/dev/null 2>&1; then
+            success "Git repository migrated and is working correctly"
+        else
+            warning "Git repository migrated but may have some issues - this is usually not critical"
+        fi
         
     else
         log "Not a git repository, copying files directly..."
-        cp -r "$OLD_PROJECT_DIR"/* "$NEW_PROJECT_DIR/"
+        # Use rsync for better file copying, excluding common build directories
+        rsync -av --exclude='node_modules' --exclude='.next' --exclude='dist' --exclude='build' "$OLD_PROJECT_DIR/" "$NEW_PROJECT_DIR/"
         chown -R "$NEW_USER:www-data" "$NEW_PROJECT_DIR"
     fi
+    
+    # Ensure proper permissions
+    chmod -R 755 "$NEW_PROJECT_DIR"
+    chmod -R g+w "$NEW_PROJECT_DIR"
     
     success "Project directory migrated to: $NEW_PROJECT_DIR"
 }
