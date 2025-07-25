@@ -22,6 +22,11 @@ PROJECT_DIR="$(pwd)"
 ENV_FILE="$PROJECT_DIR/.env"
 BACKUP_ENV_FILE="$PROJECT_DIR/.env.backup.$(date +%Y%m%d_%H%M%S)"
 
+# User context variables
+IS_ROOT=false
+CURRENT_USER=""
+DEPLOY_USER=""
+
 # Logging functions
 log() {
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
@@ -369,7 +374,7 @@ seed_database() {
     log "Seeding database with initial data..."
 
     if [[ -f "$PROJECT_DIR/prisma/seed.js" ]]; then
-        node prisma/seed.js || {
+        execute_with_user "cd '$PROJECT_DIR' && node prisma/seed.js" || {
             warning "Seeding failed, but continuing..."
         }
         success "Database seeded with initial data"
@@ -387,7 +392,7 @@ run_tests() {
 
     # Test Prisma connection
     log "Testing Prisma connection..."
-    if npm run prisma:studio --help >/dev/null 2>&1; then
+    if execute_with_user "cd '$PROJECT_DIR' && npm run prisma:studio --help" >/dev/null 2>&1; then
         success "Prisma is properly configured"
     else
         error "Prisma configuration test failed"
@@ -396,7 +401,7 @@ run_tests() {
 
     # Test application build
     log "Testing application build..."
-    if npm run build >/dev/null 2>&1; then
+    if execute_with_user "cd '$PROJECT_DIR' && npm run build" >/dev/null 2>&1; then
         success "Application builds successfully"
     else
         warning "Application build failed, but database setup is complete"
@@ -447,8 +452,8 @@ cleanup_on_error() {
     # Optionally remove created database and user
     read -p "Do you want to remove the created database and user? (y/N): " cleanup_db
     if [[ "$cleanup_db" =~ ^[Yy]$ ]]; then
-        sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
-        sudo -u postgres psql -c "DROP USER IF EXISTS $DB_USER;" 2>/dev/null || true
+        execute_sudo "su - postgres -c \"psql -c \\\"DROP DATABASE IF EXISTS $DB_NAME;\\\"\""  2>/dev/null || true
+        execute_sudo "su - postgres -c \"psql -c \\\"DROP USER IF EXISTS $DB_USER;\\\"\""  2>/dev/null || true
         log "Database and user removed"
     fi
 }
@@ -464,7 +469,7 @@ main() {
     trap cleanup_on_error ERR
 
     # Pre-flight checks
-    check_root
+    check_user_context
     detect_ubuntu_version
 
     # Main setup steps
