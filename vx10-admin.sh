@@ -1455,28 +1455,23 @@ system_info() {
 # Main menu
 main_menu() {
     while true; do
-        clear
-        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}║${NC}   ${BLUE}██   ██ ██   ██  ██████   ██   ██      ██      ██${NC}   ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}   ${BLUE}██   ██ ██   ██ ██    ██  ██   ██     ████     ██${NC}   ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}   ${BLUE}███████ ██   ██ ██    ██  ██   ██    ██  ██    ██${NC}   ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}   ${BLUE}██   ██ ██   ██ ██    ██  ██   ██   ████████   ██${NC}   ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}   ${BLUE}██   ██  █████   ██████    █████   ██      ██  ██${NC}   ${CYAN}║${NC}"
-        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${CYAN}║${NC}           ${MAGENTA}Welcome to VX10 Admin Panel${NC}           ${CYAN}║${NC}"
-        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}1${NC} ${CYAN}│${NC} 🟢 GitHub Management         ${CYAN}│${NC} Manage code & branches      ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}2${NC} ${CYAN}│${NC} 🟢 Node.js Management        ${CYAN}│${NC} Dependencies & builds       ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}3${NC} ${CYAN}│${NC} 🟢 PM2 Management            ${CYAN}│${NC} Process control            ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}4${NC} ${CYAN}│${NC} 🟢 Nginx Management          ${CYAN}│${NC} Web server control         ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}5${NC} ${CYAN}│${NC} 🟢 Database Management       ${CYAN}│${NC} PostgreSQL & migrations    ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}6${NC} ${CYAN}│${NC} 🟢 Utilities                 ${CYAN}│${NC} Tools & diagnostics        ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}7${NC} ${CYAN}│${NC} 🟢 System Information        ${CYAN}│${NC} OS, resources, services    ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${GREEN}8${NC} ${CYAN}│${NC} 🟢 Setup Project             ${CYAN}│${NC} New install/setup          ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${RED}9${NC} ${CYAN}│${NC} 🔴 Exit                      ${CYAN}│${NC} Quit admin panel           ${CYAN}║${NC}"
-        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+        cls 2>/dev/null || clear
+        echo "========================================="
+        echo "         VX10 Admin Panel (Windows)      "
+        echo "========================================="
+        echo " 1) GitHub Management         - Manage code & branches"
+        echo " 2) Node.js Management        - Dependencies & builds"
+        echo " 3) PM2 Management            - Process control"
+        echo " 4) Nginx Management          - Web server control"
+        echo " 5) Database Management       - PostgreSQL & migrations"
+        echo " 6) Utilities                 - Tools & diagnostics"
+        echo " 7) System Information        - OS, resources, services"
+        echo " 8) Setup Project             - New install/setup"
+        echo " 9) Exit                      - Quit admin panel"
+        echo "========================================="
         echo
-        read -p "${YELLOW}Select option [1-9]: ${NC}" choice
+        echo -n "Select option [1-9]: "
+        read choice
         case $choice in
             1) github_menu ;;
             2) node_menu ;;
@@ -1487,13 +1482,13 @@ main_menu() {
             7) system_info ;;
             8) setup_project_from_scratch ;;
             9)
-                echo -e "${RED}╔════════════════════════════════════════════════════════════╗${NC}"
-                echo -e "${RED}║${NC}        ${YELLOW}Thank you for using VX10 Admin Panel!${NC}        ${RED}║${NC}"
-                echo -e "${RED}╚════════════════════════════════════════════════════════════╝${NC}"
+                echo "========================================="
+                echo " Thank you for using VX10 Admin Panel!   "
+                echo "========================================="
                 exit 0
                 ;;
             *)
-                echo -e "${RED}✗ Invalid option. Please select a number from 1 to 9.${NC}"
+                echo "Invalid option. Please select a number from 1 to 9."
                 sleep 1
                 ;;
         esac
