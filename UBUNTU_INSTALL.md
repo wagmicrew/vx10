@@ -45,9 +45,18 @@ if [[ -f "utils/edge-logger-safe.js" ]]; then
     cp utils/edge-logger-safe.js utils/edge-logger.js
 fi
 
-# Generate Prisma client
+# Generate Prisma client and fix imports
 if [[ -f "prisma/schema.prisma" ]]; then
     npx prisma generate
+    
+    # Fix Prisma import paths in API routes
+    find src/app/api -name "*.js" -exec sed -i 's|from '\''@prisma/client'\''|from '\''../../../generated/prisma'\''|g' {} \;
+    find src/app/api -name "*.js" -exec sed -i 's|from "@prisma/client"|from "../../../generated/prisma"|g' {} \;
+    
+    # Fix specific path for lessons route (different depth)
+    if [[ -f "src/app/api/lessons/route.js" ]]; then
+        sed -i 's|from '\''../../../generated/prisma'\''|from '\''../../generated/prisma'\''|g' src/app/api/lessons/route.js
+    fi
 fi
 
 # Test build

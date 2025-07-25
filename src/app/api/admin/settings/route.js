@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../../generated/prisma';
 import { logger } from '@/utils/edge-logger';
 
 const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const settings = await prisma.adminSettings.findMany({
+    const settings = await prisma.settings.findMany({
       orderBy: {
-        settingKey: 'asc'
+        key: 'asc'
       }
     });
 
@@ -29,26 +29,30 @@ export async function GET() {
 // POST method to create/update admin settings (admin only)
 export async function POST(request) {
   try {
-    const { settingKey, settingValue, description } = await request.json();
+    const { category, key, value, description } = await request.json();
 
     // TODO: Add authentication check for admin role
     
-    const setting = await prisma.adminSettings.upsert({
+    const setting = await prisma.settings.upsert({
       where: {
-        settingKey: settingKey
+        category_key: {
+          category: category,
+          key: key
+        }
       },
       update: {
-        settingValue,
+        value,
         description
       },
       create: {
-        settingKey,
-        settingValue,
+        category,
+        key,
+        value,
         description
       }
     });
 
-    logger.info('Admin setting updated successfully', { settingKey });
+    logger.info('Admin setting updated successfully', { category, key });
 
     return NextResponse.json(setting);
   } catch (error) {

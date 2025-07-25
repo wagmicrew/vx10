@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../../generated/prisma';
 import { logger } from '@/utils/edge-logger';
 import { format, parseISO, addMinutes, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 
@@ -37,10 +37,10 @@ export async function GET(request) {
     }
 
     // Get admin settings for working hours
-    const settings = await prisma.adminSettings.findMany();
+    const settings = await prisma.settings.findMany();
     const settingsMap = {};
     settings.forEach(setting => {
-      settingsMap[setting.settingKey] = setting.settingValue;
+      settingsMap[setting.key] = setting.value;
     });
 
     const workingStartTime = settingsMap['WORKING_START_TIME'] || DEFAULT_START_TIME;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../../generated/prisma';
 import { logger } from '@/utils/edge-logger';
 import { auth } from "@/lib/auth/config";
 import { parseISO } from 'date-fns';

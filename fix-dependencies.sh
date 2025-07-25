@@ -234,7 +234,18 @@ fix_prisma_issues() {
     if [[ -f "prisma/schema.prisma" ]]; then
         log "Generating Prisma client..."
         npx prisma generate
-        success "Prisma client generated"
+        
+        # Fix Prisma import paths in API routes
+        log "Fixing Prisma import paths..."
+        find src/app/api -name "*.js" -exec sed -i 's|from '\''@prisma/client'\''|from '\''../../../generated/prisma'\''|g' {} \;
+        find src/app/api -name "*.js" -exec sed -i 's|from "@prisma/client"|from "../../../generated/prisma"|g' {} \;
+        
+        # Fix specific path for lessons route (different depth)
+        if [[ -f "src/app/api/lessons/route.js" ]]; then
+            sed -i 's|from '\''../../../generated/prisma'\''|from '\''../../generated/prisma'\''|g' src/app/api/lessons/route.js
+        fi
+        
+        success "Prisma client generated and imports fixed"
     else
         warning "No Prisma schema found, skipping Prisma client generation"
     fi
