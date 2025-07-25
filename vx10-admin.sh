@@ -1456,22 +1456,27 @@ system_info() {
 main_menu() {
     while true; do
         clear
-        echo -e "${BLUE}================================${NC}"
-        echo -e "${BLUE}        VX10 Admin Panel        ${NC}"
-        echo -e "${BLUE}================================${NC}"
+        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║${NC}   ${BLUE}██   ██ ██   ██  ██████   ██   ██      ██      ██${NC}   ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}   ${BLUE}██   ██ ██   ██ ██    ██  ██   ██     ████     ██${NC}   ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}   ${BLUE}███████ ██   ██ ██    ██  ██   ██    ██  ██    ██${NC}   ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}   ${BLUE}██   ██ ██   ██ ██    ██  ██   ██   ████████   ██${NC}   ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}   ${BLUE}██   ██  █████   ██████    █████   ██      ██  ██${NC}   ${CYAN}║${NC}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "${CYAN}║${NC}           ${MAGENTA}Welcome to VX10 Admin Panel${NC}           ${CYAN}║${NC}"
+        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}1${NC} ${CYAN}│${NC} 🟢 GitHub Management         ${CYAN}│${NC} Manage code & branches      ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}2${NC} ${CYAN}│${NC} 🟢 Node.js Management        ${CYAN}│${NC} Dependencies & builds       ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}3${NC} ${CYAN}│${NC} 🟢 PM2 Management            ${CYAN}│${NC} Process control            ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}4${NC} ${CYAN}│${NC} 🟢 Nginx Management          ${CYAN}│${NC} Web server control         ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}5${NC} ${CYAN}│${NC} 🟢 Database Management       ${CYAN}│${NC} PostgreSQL & migrations    ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}6${NC} ${CYAN}│${NC} 🟢 Utilities                 ${CYAN}│${NC} Tools & diagnostics        ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}7${NC} ${CYAN}│${NC} 🟢 System Information        ${CYAN}│${NC} OS, resources, services    ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${GREEN}8${NC} ${CYAN}│${NC} 🟢 Setup Project             ${CYAN}│${NC} New install/setup          ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${RED}9${NC} ${CYAN}│${NC} 🔴 Exit                      ${CYAN}│${NC} Quit admin panel           ${CYAN}║${NC}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
         echo
-        echo "1) GitHub Management"
-        echo "2) Node.js Management"
-        echo "3) PM2 Management"
-        echo "4) Nginx Management"
-        echo "5) Database Management"
-        echo "6) Utilities"
-        echo "7) System Information"
-        echo "8) Setup project from scratch"
-        echo "9) Exit"
-        echo
-        read -p "Select option [1-9]: " choice
-        
+        read -p "${YELLOW}Select option [1-9]: ${NC}" choice
         case $choice in
             1) github_menu ;;
             2) node_menu ;;
@@ -1481,11 +1486,16 @@ main_menu() {
             6) utilities_menu ;;
             7) system_info ;;
             8) setup_project_from_scratch ;;
-            9) 
-                log "Goodbye!"
+            9)
+                echo -e "${RED}╔════════════════════════════════════════════════════════════╗${NC}"
+                echo -e "${RED}║${NC}        ${YELLOW}Thank you for using VX10 Admin Panel!${NC}        ${RED}║${NC}"
+                echo -e "${RED}╚════════════════════════════════════════════════════════════╝${NC}"
                 exit 0
                 ;;
-            *) error "Invalid option. Please try again." ;;
+            *)
+                echo -e "${RED}✗ Invalid option. Please select a number from 1 to 9.${NC}"
+                sleep 1
+                ;;
         esac
     done
 }
