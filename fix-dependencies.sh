@@ -1,8 +1,8 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # Fix Dependencies Script for Ubuntu
 # Installs missing dependencies and resolves build issues
-# Compatible with Ubuntu/Linux environments
+# Compatible with Ubuntu/Linux environments ONLY
 
 set -e
 

@@ -83,12 +83,17 @@ The enhanced `fix-dependencies.sh` script now includes:
 
 ## Usage on Ubuntu
 
-1. Make the script executable:
+1. Pull the latest changes:
+   ```bash
+   git pull origin master
+   ```
+
+2. Make the script executable:
    ```bash
    chmod +x fix-dependencies.sh
    ```
 
-2. Run the script:
+3. Run the script:
    ```bash
    ./fix-dependencies.sh
    ```
