@@ -1503,7 +1503,83 @@ main_menu() {
     done
 }
 
+# Prerequisites check function - moved before main()
+check_prerequisites() {
+    local missing_tools=()
+    local optional_tools=()
 
+    # Essential tools
+    if ! command_exists git; then
+        missing_tools+=("git")
+    fi
+    if ! command_exists node; then
+        missing_tools+=("nodejs")
+    fi
+    if ! command_exists npm; then
+        missing_tools+=("npm")
+    fi
+    if ! command_exists curl; then
+        missing_tools+=("curl")
+    fi
+    if ! command_exists wget; then
+        missing_tools+=("wget")
+    fi
+
+    # Optional tools
+    if ! command_exists pm2; then
+        optional_tools+=("pm2 (install with npm)")
+    fi
+    if ! command_exists psql; then
+        optional_tools+=("postgresql-client")
+    fi
+    if ! command_exists nginx; then
+        optional_tools+=("nginx")
+    fi
+    if ! command_exists docker; then
+        optional_tools+=("docker")
+    fi
+
+    # Report missing essential tools
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        error "Missing essential tools: ${missing_tools[*]}"
+        read -p "Install missing tools now? (y/N): " install_confirm
+        if [[ "$install_confirm" =~ ^[Yy]$ ]]; then
+            log "Installing missing tools..."
+            sudo apt-get update -qq
+            sudo apt-get install -y "${missing_tools[@]}"
+        else
+            warning "Some features may not work without these tools."
+            read -p "Continue anyway? (y/N): " confirm_cont
+            [[ "$confirm_cont" =~ ^[Yy]$ ]] || exit 1
+        fi
+    else
+        log "All essential prerequisites are available."
+    fi
+
+    # Report missing optional tools
+    if [[ ${#optional_tools[@]} -gt 0 ]]; then
+        warning "Missing optional tools: ${optional_tools[*]}"
+        echo "These tools are recommended but not necessary for basic functionality."
+    fi
+}
+
+# Add missing node_start_dev function
+node_start_dev() {
+    local project_dir=$(prompt_project_dir)
+    
+    log "Starting development server..."
+    
+    # Check if package.json exists and has dev script
+    if [[ -f "$project_dir/package.json" ]] && grep -q '"dev"' "$project_dir/package.json"; then
+        execute_with_user "cd '$project_dir' && npm run dev"
+    else
+        warning "No dev script found in package.json"
+        log "Available scripts:"
+        execute_with_user "cd '$project_dir' && npm run"
+    fi
+    
+    read -p "Press Enter to continue..."
+}
 
 # Main execution
 main() {
@@ -1516,6 +1592,7 @@ main() {
 # Run main function
 main "$@"
 
+# Additional utility functions (kept for compatibility)
 logs_nginx_error() {
     log "Showing Nginx error logs (Press Ctrl+C to exit)..."
     sudo tail -f /var/log/nginx/error.log
@@ -1578,121 +1655,3 @@ logs_clear() {
     fi
     read -p "Press Enter to continue..."
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Simplified prerequisites check function
-check_prerequisites() {
-    local missing_tools=()
-    local optional_tools=()
-
-    # Essential tools
-    if ! command_exists git; then
-        missing_tools+=("git")
-    fi
-    if ! command_exists node; then
-        missing_tools+=("nodejs")
-    fi
-    if ! command_exists npm; then
-        missing_tools+=("npm")
-    fi
-    if ! command_exists curl; then
-        missing_tools+=("curl")
-    fi
-    if ! command_exists wget; then
-        missing_tools+=("wget")
-    fi
-
-    # Optional tools
-    if ! command_exists pm2; then
-        optional_tools+=("pm2 (install with npm)")
-    fi
-    if ! command_exists psql; then
-        optional_tools+=("postgresql-client")
-    fi
-    if ! command_exists nginx; then
-        optional_tools+=("nginx")
-    fi
-    if ! command_exists docker; then
-        optional_tools+=("docker/docker-compose")
-    fi
-
-    # Report missing essential tools
-    if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        error "Missing essential tools: ${missing_tools[*]}"
-        read -p "Install missing tools now? (y/N): " install_confirm
-        if [[ "$install_confirm" =~ ^[Yy]$ ]]; then
-            log "Installing missing tools..."
-            sudo apt-get update -qq
-            sudo apt-get install -y "${missing_tools[@]}"
-        else
-            warning "Some features may not work without these tools."
-            read -p "Continue anyway? (y/N): " confirm_cont
-            [[ "$confirm_cont" =~ ^[Yy]$ ]] || exit 1
-        fi
-    else
-        log "All essential prerequisites are available."
-    fi
-
-    # Report missing optional tools
-    if [[ ${#optional_tools[@]} -gt 0 ]]; then
-        warning "Missing optional tools: ${optional_tools[*]}"
-        echo "These tools are recommended but not necessary for basic functionality."
-    fi
-}
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-
-    
-    if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        error "Missing required tools: ${missing_tools[*]}"
-        read -p "Install missing tools now? (y/N): " install_confirm
-        if [[ "$install_confirm" =~ ^[Yy]$ ]]; then
-            log "Installing missing tools..."
-            sudo apt-get update -qq
-            sudo apt-get install -y "${missing_tools[@]}"
-        else
-            warning "Some features may not work without these tools."
-        fi
-    else
-        log "All prerequisites are available."
-    fi
-}
-
-# Main execution
-main() {
-    log "Starting VX10 Admin Panel..."
-    setup_user_context
-    check_prerequisites
-    main_menu
-}
-
-# Run main function
-main "$@"
