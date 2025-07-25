@@ -234,11 +234,41 @@ update_configuration_files() {
         fi
     done
     
-    # Update next.config.js
+    # Update next.config files (both .js and .ts)
     if [[ -f "next.config.js" ]]; then
         log "Updating next.config.js..."
         sed -i "s/vx10/din-trafikskola-hlm/g" next.config.js
         sed -i "s/VX10/Din Trafikskola HLM/g" next.config.js
+    fi
+    
+    # Handle next.config.ts and convert to next.config.js if needed
+    if [[ -f "next.config.ts" ]]; then
+        log "Found next.config.ts - converting to next.config.js for compatibility..."
+        # Update references in the TypeScript config
+        sed -i "s/vx10/din-trafikskola-hlm/g" next.config.ts
+        sed -i "s/VX10/Din Trafikskola HLM/g" next.config.ts
+        
+        # Convert TypeScript config to JavaScript
+        # Remove TypeScript-specific syntax and rename to .js
+        cp next.config.ts next.config.js
+        
+        # Remove TypeScript imports and type annotations
+        sed -i 's/import type { NextConfig } from "next"/\/\/ NextConfig type removed for JavaScript compatibility/' next.config.js
+        sed -i 's/import { NextConfig } from "next"/\/\/ NextConfig import removed for JavaScript compatibility/' next.config.js
+        sed -i 's/: NextConfig//g' next.config.js
+        sed -i 's/as NextConfig//g' next.config.js
+        
+        # Remove the original TypeScript config
+        rm next.config.ts
+        
+        success "Converted next.config.ts to next.config.js for compatibility"
+    fi
+    
+    # Also check for next.config.mjs
+    if [[ -f "next.config.mjs" ]]; then
+        log "Updating next.config.mjs..."
+        sed -i "s/vx10/din-trafikskola-hlm/g" next.config.mjs
+        sed -i "s/VX10/Din Trafikskola HLM/g" next.config.mjs
     fi
     
     # Update prisma schema if exists
