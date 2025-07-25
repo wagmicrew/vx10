@@ -46,9 +46,25 @@ model User {
   emergencyPhone   String?
   notes         String?
   isActive      Boolean   @default(true)
+
+  // Additional fields for enhanced functionality
+  personalNumber String?   // Swedish personnummer
+  licenseNumber  String?   // Driving license number
+  licenseType    String?   // License type (B, BE, etc.)
+  licenseExpiry  DateTime? // License expiry date
+  medicalCertExpiry DateTime? // Medical certificate expiry
+  preferredLanguage String? @default("sv") // Language preference
+  marketingConsent Boolean @default(false) // Marketing consent
+
+  // Instructor specific fields
+  instructorId   String?   // Instructor certification ID
+  specializations String[] // Areas of specialization
+  hourlyRate     Decimal?  @db.Decimal(10, 2) // Hourly rate for instructors
+  availability   Json?     // Weekly availability schedule
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
+
   // Relations
   accounts      Account[]
   sessions      Session[]
@@ -56,7 +72,15 @@ model User {
   credits       Credit[]
   lessonPlanning LessonPlanning[]
   blockedSlots  BlockedSlot[]
-  
+
+  // Schedule Management relations
+  schedules     Schedule[]
+  workingHours  WorkingHours[]
+
+  // Payment/Invoice relations
+  invoices      Invoice[]
+  payments      Payment[]
+
   @@map("users")
 }
 
@@ -78,7 +102,8 @@ model Lesson {
   bookings       Booking[]
   packageLessons PackageLesson[]
   credits        Credit[]
-  
+  invoiceItems   InvoiceItem[]
+
   @@map("lessons")
 }
 
@@ -97,7 +122,8 @@ model Package {
   // Relations
   packageLessons PackageLesson[]
   credits        Credit[]
-  
+  invoiceItems   InvoiceItem[]
+
   @@map("packages")
 }
 
@@ -162,7 +188,14 @@ model Booking {
   lesson        Lesson        @relation(fields: [lessonId], references: [id])
   user          User          @relation(fields: [userId], references: [id])
   lessonPlanning LessonPlanning[]
-  
+
+  // Schedule relation (optional - for scheduled bookings)
+  scheduleId    String?
+  schedule      Schedule?     @relation("ScheduleBookings", fields: [scheduleId], references: [id])
+
+  // Invoice relation
+  invoiceItems  InvoiceItem[]
+
   @@map("bookings")
 }
 
@@ -200,11 +233,162 @@ model BlockedSlot {
   recurringPattern String? // 'weekly', 'monthly', etc.
   createdAt DateTime @default(now())
   createdBy String
-  
+
   // Relations
   creator   User     @relation(fields: [createdBy], references: [id])
-  
+
   @@map("blocked_slots")
+}
+
+// Enhanced Schedule Management
+model Schedule {
+  id          String   @id @default(cuid())
+  instructorId String
+  date        DateTime
+  startTime   String   // Format: "HH:MM"
+  endTime     String   // Format: "HH:MM"
+  isAvailable Boolean  @default(true)
+  isRecurring Boolean  @default(false)
+  recurringPattern String? // 'daily', 'weekly', 'monthly'
+  recurringEndDate DateTime?
+  maxBookings Int      @default(1) // How many students can book this slot
+  currentBookings Int  @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  instructor  User     @relation(fields: [instructorId], references: [id])
+  bookings    Booking[] @relation("ScheduleBookings")
+
+  @@map("schedules")
+}
+
+// Working Hours Configuration
+model WorkingHours {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, etc.
+  startTime   String   // Format: "HH:MM"
+  endTime     String   // Format: "HH:MM"
+  isActive    Boolean  @default(true)
+  breakStart  String?  // Optional break start time
+  breakEnd    String?  // Optional break end time
+  instructorId String? // Null for general hours, specific for instructor
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  instructor  User?    @relation(fields: [instructorId], references: [id])
+
+  @@map("working_hours")
+}
+
+// Holiday and Special Days
+model Holiday {
+  id          String   @id @default(cuid())
+  name        String
+  date        DateTime
+  isRecurring Boolean  @default(false) // For annual holidays
+  description String?
+  affectsSchedule Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("holidays")
+}
+
+// Payment and Invoice Management
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  userId        String
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  taxAmount     Decimal       @db.Decimal(10, 2) @default(0)
+  discountAmount Decimal      @db.Decimal(10, 2) @default(0)
+  finalAmount   Decimal       @db.Decimal(10, 2)
+  currency      String        @default("SEK")
+  status        InvoiceStatus @default(DRAFT)
+  dueDate       DateTime
+  paidDate      DateTime?
+  description   String?
+  notes         String?
+
+  // Invoice details
+  billingAddress Json?        // Structured billing address
+  companyInfo   Json?         // Company information if B2B
+  taxRate       Decimal       @db.Decimal(5, 2) @default(25.00) // Swedish VAT
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id])
+  invoiceItems  InvoiceItem[]
+  payments      Payment[]
+
+  @@map("invoices")
+}
+
+// Invoice line items
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  taxRate     Decimal  @db.Decimal(5, 2) @default(25.00)
+
+  // Optional relations to specific items
+  lessonId    String?
+  packageId   String?
+  bookingId   String?
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  package     Package? @relation(fields: [packageId], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+
+  @@map("invoice_items")
+}
+
+// Payment records
+model Payment {
+  id              String        @id @default(cuid())
+  invoiceId       String?       // Can be null for direct payments
+  userId          String
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("SEK")
+  paymentMethod   PaymentMethod
+  status          PaymentStatus @default(PENDING)
+
+  // External payment provider details
+  externalId      String?       // Payment provider transaction ID
+  providerName    String?       // 'stripe', 'swish', 'klarna', etc.
+  providerResponse Json?        // Full response from payment provider
+
+  // Payment details
+  paidAt          DateTime?
+  failedAt        DateTime?
+  refundedAt      DateTime?
+  refundAmount    Decimal?      @db.Decimal(10, 2)
+  failureReason   String?
+
+  // Metadata
+  description     String?
+  metadata        Json?         // Additional payment metadata
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  user            User          @relation(fields: [userId], references: [id])
+  invoice         Invoice?      @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
 }
 
 // NextAuth.js required models
@@ -278,6 +462,10 @@ enum PaymentMethod {
   SWISH
   INVOICE
   CREDIT
+  BANK_TRANSFER
+  KLARNA
+  PAYPAL
+  CASH
 }
 
 enum CreditStatus {
@@ -292,4 +480,13 @@ enum PlanningStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
 }

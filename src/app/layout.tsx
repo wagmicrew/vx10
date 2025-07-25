@@ -5,6 +5,7 @@ import { ClientNavigation } from "@/components/client-navigation"
 import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/lib/auth/context"
 import { MUIThemeProvider } from "@/components/providers/mui-theme-provider"
+import DatabaseProvider from "@/components/providers/DatabaseProvider"
 import { Toaster } from "sonner"
 import VX10ErrorBoundary, { NetworkMonitor, PerformanceMonitor } from "@/components/error-monitoring"
 
@@ -216,14 +217,16 @@ export default function RootLayout({
       <body className={inter.className}>
         <MUIThemeProvider>
           <VX10ErrorBoundary>
-            <AuthProvider>
-              <NetworkMonitor />
-              <PerformanceMonitor />
-              <ClientNavigation />
-              {children}
-              <Footer />
-              <Toaster position="top-right" richColors closeButton />
-            </AuthProvider>
+            <DatabaseProvider>
+              <AuthProvider>
+                <NetworkMonitor />
+                <PerformanceMonitor />
+                <ClientNavigation />
+                {children}
+                <Footer />
+                <Toaster position="top-right" richColors closeButton />
+              </AuthProvider>
+            </DatabaseProvider>
           </VX10ErrorBoundary>
         </MUIThemeProvider>
       </body>

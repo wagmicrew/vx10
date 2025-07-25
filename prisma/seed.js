@@ -127,6 +127,92 @@ async function main() {
 
   console.log(`✅ Created ${packages.length} packages`);
 
+  // Create sample working hours (Monday to Friday, 8 AM to 6 PM)
+  const workingHours = [];
+  for (let day = 1; day <= 5; day++) { // Monday to Friday
+    workingHours.push({
+      dayOfWeek: day,
+      startTime: '08:00',
+      endTime: '18:00',
+      breakStart: '12:00',
+      breakEnd: '13:00',
+      isActive: true
+    });
+  }
+
+  for (const hours of workingHours) {
+    await prisma.workingHours.create({
+      data: hours
+    }).catch(() => {
+      // Ignore if already exists
+    });
+  }
+
+  console.log(`✅ Created ${workingHours.length} working hour entries`);
+
+  // Create sample holidays
+  const currentYear = new Date().getFullYear();
+  const holidays = [
+    {
+      name: 'Nyårsdagen',
+      date: new Date(currentYear, 0, 1), // January 1st
+      isRecurring: true,
+      description: 'New Year\'s Day'
+    },
+    {
+      name: 'Trettondedag jul',
+      date: new Date(currentYear, 0, 6), // January 6th
+      isRecurring: true,
+      description: 'Epiphany'
+    },
+    {
+      name: 'Första maj',
+      date: new Date(currentYear, 4, 1), // May 1st
+      isRecurring: true,
+      description: 'Labour Day'
+    },
+    {
+      name: 'Sveriges nationaldag',
+      date: new Date(currentYear, 5, 6), // June 6th
+      isRecurring: true,
+      description: 'National Day of Sweden'
+    },
+    {
+      name: 'Midsommarafton',
+      date: new Date(currentYear, 5, 21), // Approximate date
+      isRecurring: true,
+      description: 'Midsummer Eve'
+    },
+    {
+      name: 'Julafton',
+      date: new Date(currentYear, 11, 24), // December 24th
+      isRecurring: true,
+      description: 'Christmas Eve'
+    },
+    {
+      name: 'Juldagen',
+      date: new Date(currentYear, 11, 25), // December 25th
+      isRecurring: true,
+      description: 'Christmas Day'
+    },
+    {
+      name: 'Annandag jul',
+      date: new Date(currentYear, 11, 26), // December 26th
+      isRecurring: true,
+      description: 'Boxing Day'
+    }
+  ];
+
+  for (const holiday of holidays) {
+    await prisma.holiday.create({
+      data: holiday
+    }).catch(() => {
+      // Ignore if already exists
+    });
+  }
+
+  console.log(`✅ Created ${holidays.length} holidays`);
+
   console.log('🎉 Supabase database seeding completed successfully!');
 }
 

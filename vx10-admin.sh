@@ -1493,19 +1493,19 @@ main_menu() {
 # Main execution
 main() {
     log "Starting VX10 Admin Panel..."
-    
+
     # Setup user context and permissions
     setup_user_context
-    
+
+    # Check prerequisites
+    check_prerequisites
+
     # Start main menu
     main_menu
 }
 
 # Run main function
 main "$@"
-    log "Showing Nginx access logs (Press Ctrl+C to exit)..."
-    sudo tail -f /var/log/nginx/access.log
-}
 
 logs_nginx_error() {
     log "Showing Nginx error logs (Press Ctrl+C to exit)..."
@@ -1518,7 +1518,7 @@ logs_system() {
 }
 
 logs_application() {
-    local project_dir=$(get_project_dir)
+    local project_dir=$(prompt_project_dir)
     local log_file="$project_dir/logs/application.log"
     
     if [[ -f "$log_file" ]]; then
@@ -1570,321 +1570,19 @@ logs_clear() {
     read -p "Press Enter to continue..."
 }
 
-# Utilities Menu
-utilities_menu() {
-    while true; do
-        clear
-        echo -e "${YELLOW}================================${NC}"
-        echo -e "${YELLOW}       VX10 Utilities           ${NC}"
-        echo -e "${YELLOW}================================${NC}"
-        echo
-        echo "1) Clear cache"
-        echo "2) Reinstall dependencies"
-        echo "3) Restart application"
-        echo "4) Setup database"
-        echo "5) Quick fix permissions"
-        echo "6) Full fix permissions"
-        echo "7) Diagnose and fix issues"
-        echo "8) Check disk space"
-        echo "9) Check process status"
-        echo "10) Back to main menu"
-        echo
-        read -p "Select option [1-10]: " choice
-        
-        case $choice in
-            1) clear_cache ;;
-            2) reinstall_dependencies ;;
-            3) restart_application ;;
-            4) setup_database ;;
-            5) quick_fix_permissions ;;
-            6) full_fix_permissions ;;
-            7) diagnose_and_fix ;;
-            8) check_disk_space ;;
-            9) check_process_status ;;
-            10) break ;;
-            *) error "Invalid option. Please try again." ;;
-        esac
-    done
-}
 
-# Add utility functions
-check_disk_space() {
-    log "Checking disk space..."
-    df -h .
-    echo
-    log "Directory sizes:"
-    du -sh */ 2>/dev/null | sort -hr | head -10
-    read -p "Press Enter to continue..."
-}
 
-check_process_status() {
-    log "Checking process status..."
-    echo "=== PM2 Processes ==="
-    if [[ $IS_ROOT == true ]]; then
-        sudo -u "$DEPLOY_USER" pm2 status 2>/dev/null || echo "No PM2 processes found"
-    else
-        pm2 status 2>/dev/null || echo "No PM2 processes found"
-    fi
-    
-    echo
-    echo "=== Port Usage ==="
-    netstat -tlnp | grep -E ':(3000|80|443)' 2>/dev/null || echo "No processes on common ports"
-    
-    read -p "Press Enter to continue..."
-}
 
-# Add a quick permissions fix function for utilities menu
-quick_fix_permissions() {
-    local current_dir="$(pwd)"
-    log "Quick permission fix for current directory..."
-    
-    # Basic ownership fix
-    sudo chown "$DEPLOY_USER:www-data" "$current_dir" 2>/dev/null || true
-    
-    # Fix only the most critical files
-    sudo chown "$DEPLOY_USER:www-data" "$current_dir"/{package.json,package-lock.json,.env*,next.config.js,ecosystem.config.js} 2>/dev/null || true
-    
-    # Make sure the user can read/write
-    sudo chmod 755 "$current_dir" 2>/dev/null || true
-    
-    success "Quick permissions fixed"
-    read -p "Press Enter to continue..."
-}
 
-# Add a full permissions fix function for when needed
-full_fix_permissions() {
-    local current_dir="$(pwd)"
-    warning "This will fix permissions for ALL files and may take time!"
-    read -p "Continue? (y/N): " confirm
-    
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        log "Fixing all permissions (this may take a while)..."
-        
-        # Full recursive fix
-        sudo chown -R "$DEPLOY_USER:www-data" "$current_dir" 2>/dev/null || true
-        sudo find "$current_dir" -type d -exec chmod 755 {} \; 2>/dev/null || true
-        sudo find "$current_dir" -type f -exec chmod 644 {} \; 2>/dev/null || true
-        
-        # Make scripts executable
-        sudo find "$current_dir" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
-        
-        success "All permissions fixed"
-    fi
-    read -p "Press Enter to continue..."
-}
 
-# Add a function to check and fix common issues
-diagnose_and_fix() {
-    local project_dir=$(prompt_project_dir)
-    cd "$project_dir"
-    
-    log "Running comprehensive diagnostics and fixes..."
-    
-    # Fix git ownership
-    fix_git_ownership "$project_dir"
-    
-    # Check package.json
-    if [[ ! -f "package.json" ]]; then
-        error "package.json not found!"
-        return 1
-    fi
-    
-    log "✓ package.json found"
-    
-    # Check if node_modules exists and is not empty
-    if [[ ! -d "node_modules" ]] || [[ -z "$(ls -A node_modules 2>/dev/null)" ]]; then
-        log "⚠ node_modules missing or empty, installing..."
-        execute_with_user "cd '$project_dir' && npm install"
-    else
-        log "✓ node_modules directory exists"
-    fi
-    
-    # Check if Next.js is available
-    if [[ ! -f "node_modules/.bin/next" ]]; then
-        warning "Next.js not found, reinstalling dependencies..."
-        execute_with_user "cd '$project_dir' && npm install"
-    else
-        log "✓ Next.js is available"
-    fi
-    
-    # Check if .next exists
-    if [[ ! -d ".next" ]]; then
-        log "⚠ .next directory missing, building..."
-        execute_with_user "cd '$project_dir' && npx next build"
-    else
-        log "✓ .next build directory exists"
-    fi
-    
-    # Check PM2 processes
-    if [[ $IS_ROOT == true ]]; then
-        local pm2_status=$(runuser -l "$DEPLOY_USER" -c "pm2 status" 2>/dev/null | grep -c "online" || echo "0")
-    else
-        local pm2_status=$(pm2 status 2>/dev/null | grep -c "online" || echo "0")
-    fi
-    
-    if [[ "$pm2_status" -eq 0 ]]; then
-        log "⚠ No PM2 processes running"
-        if [[ -f "ecosystem.config.js" ]]; then
-            log "Starting application with PM2..."
-            if [[ $IS_ROOT == true ]]; then
-                runuser -l "$DEPLOY_USER" -c "cd '$project_dir' && pm2 start ecosystem.config.js"
-            else
-                cd "$project_dir" && pm2 start ecosystem.config.js
-            fi
-        else
-            warning "ecosystem.config.js not found. Cannot start PM2 processes."
-        fi
-    else
-        log "✓ PM2 processes are running ($pm2_status online)"
-    fi
-    
-    # Fix permissions
-    fix_permissions
-    
-    success "Diagnostics and fixes completed!"
-    read -p "Press Enter to continue..."
-}
 
-# Add a comprehensive setup function for new installations
-setup_project_from_scratch() {
-    local project_dir=$(prompt_project_dir)
-    
-    log "Setting up project from scratch in $project_dir..."
-    
-    # Create directory if it doesn't exist
-    if [[ ! -d "$project_dir" ]]; then
-        log "Creating project directory..."
-        sudo mkdir -p "$project_dir"
-        sudo chown "$DEPLOY_USER:www-data" "$project_dir"
-    fi
-    
-    cd "$project_dir"
-    
-    # Check if it's already a git repository
-    if [[ ! -d ".git" ]]; then
-        log "Initializing git repository..."
-        read -p "Enter GitHub repository URL: " repo_url
-        if [[ -n "$repo_url" ]]; then
-            execute_with_user "cd '$project_dir' && git clone '$repo_url' ."
-        else
-            error "No repository URL provided"
-            return 1
-        fi
-    fi
-    
-    # Fix git ownership
-    fix_git_ownership "$project_dir"
-    
-    # Install dependencies
-    log "Installing dependencies..."
-    if [[ -f "package.json" ]]; then
-        execute_with_user "cd '$project_dir' && npm install"
-    else
-        error "No package.json found in repository"
-        return 1
-    fi
-    
-    # Generate Prisma client if schema exists
-    if [[ -f "prisma/schema.prisma" ]]; then
-        log "Generating Prisma client..."
-        execute_with_user "cd '$project_dir' && npm run prisma:generate"
-    fi
-    
-    # Build project
-    log "Building project..."
-    execute_with_user "cd '$project_dir' && npm run build"
-    
-    # Fix final permissions
-    fix_permissions
-    
-    success "Project setup completed!"
-    read -p "Press Enter to continue..."
-}
 
-# Main Menu
-main_menu() {
-    while true; do
-        clear
-        echo -e "${GREEN}================================${NC}"
-        echo -e "${GREEN}        VX10 Admin Panel        ${NC}"
-        echo -e "${GREEN}================================${NC}"
-        echo
-        echo "1) GitHub Management"
-        echo "2) Node.js Management"
-        echo "3) PM2 Management"
-        echo "4) Nginx Management"
-        echo "5) Database Management"
-        echo "6) Utilities"
-        echo "7) System Information"
-        echo "8) Setup project from scratch"
-        echo "9) Exit"
-        echo
-        read -p "Select option [1-9]: " choice
-        
-        case $choice in
-            1) github_menu ;;
-            2) node_menu ;;
-            3) pm2_menu ;;
-            4) nginx_menu ;;
-            5) database_menu ;;
-            6) utilities_menu ;;
-            7) system_info ;;
-            8) setup_project_from_scratch ;;
-            9) 
-                log "Goodbye!"
-                exit 0
-                ;;
-            *) error "Invalid option. Please try again." ;;
-        esac
-    done
-}
 
-# System Info Function
-system_info() {
-    clear
-    echo -e "${GREEN}================================${NC}"
-    echo -e "${GREEN}       System Information       ${NC}"
-    echo -e "${GREEN}================================${NC}"
-    echo
-    
-    echo "=== System ==="
-    uname -a
-    echo
-    
-    echo "=== Uptime ==="
-    uptime
-    echo
-    
-    echo "=== Disk Usage ==="
-    df -h
-    echo
-    
-    echo "=== Memory Usage ==="
-    free -h
-    echo
-    
-    echo "=== CPU Usage ==="
-    top -bn1 | grep "Cpu(s)" | awk '{print $2 $3 $4 $5 $6 $7 $8}'
-    echo
-    
-    echo "=== Network ==="
-    ip addr show | grep -E "(inet|inet6)" | grep -v "127.0.0.1" | head -5
-    echo
-    
-    echo "=== Services Status ==="
-    echo "Nginx: $(sudo systemctl is-active nginx 2>/dev/null || echo 'not installed')"
-    echo "Redis: $(sudo systemctl is-active redis-server 2>/dev/null || echo 'not installed')"
-    echo "PM2: $(pm2 status | grep -c "online" 2>/dev/null || echo '0') processes running"
-    
-    if command_exists node; then
-        echo "=== Node.js ==="
-        echo "Node.js: $(node --version)"
-        echo "npm: $(npm --version)"
-        echo
-    fi
-    
-    read -p "Press Enter to continue..."
-}
+
+
+
+
+
 
 # Add a quick setup check function
 check_prerequisites() {
@@ -1982,81 +1680,8 @@ check_prerequisites() {
         missing_tools+=("docker-compose-plugin")
     fi
     
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
+
+
     
     if ! command_exists docker-compose-plugin; then
         missing_tools+=("docker-compose-plugin")
@@ -2390,9 +2015,7 @@ check_prerequisites() {
         missing_tools+=("docker.io")
     fi
     
-    if ! command_exists docker-ce;
-        missing_tools+=("curl")
-    fi
+
     
     if [[ ${#missing_tools[@]} -gt 0 ]]; then
         error "Missing required tools: ${missing_tools[*]}"
