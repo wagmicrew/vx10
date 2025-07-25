@@ -70,6 +70,7 @@ export function DynamicAdminHeader() {
   const pathname = usePathname()
 
   const isActiveLink = (href: string, exact?: boolean) => {
+    if (!pathname) return false
     if (exact) {
       return pathname === href
     }

@@ -68,7 +68,7 @@ verify_installation() {
     log "Verifying installation..."
     
     # Check if critical packages are installed
-    local critical_packages=("next" "react" "react-dom" "next-auth" "lucide-react" "@mui/material" "@mui/joy" "@mui/icons-material" "sonner")
+    local critical_packages=("next" "react" "react-dom" "next-auth" "lucide-react" "@mui/material" "@mui/joy" "@mui/icons-material" "sonner" "date-fns" "framer-motion" "@fontsource/roboto")
     
     for package in "${critical_packages[@]}"; do
         if [[ -d "node_modules/$package" ]]; then

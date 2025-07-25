@@ -121,7 +121,8 @@ export function MainNav({ className, userRole = "pupil" }: MainNavProps) {
         const Icon = item.icon
         const isActive =
           pathname === item.href ||
-          (item.href !== "/dashboard" &&
+          (pathname &&
+            item.href !== "/dashboard" &&
             item.href !== "/admin" &&
             item.href !== "/instructor" &&
             pathname.startsWith(item.href))

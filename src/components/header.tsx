@@ -64,6 +64,7 @@ export function DashboardHeader() {
   }
 
   const getDashboardTitle = () => {
+    if (!pathname) return "Dashboard"
     if (pathname.startsWith("/admin")) return "Admin Panel"
     if (pathname.startsWith("/student")) return "Elevpanel"
     if (pathname.startsWith("/larare")) return "Lärarpanel"
@@ -168,7 +169,7 @@ export function DashboardHeader() {
       </header>
 
       {/* Admin Header Navigation */}
-      {pathname.startsWith("/admin") && <DynamicAdminHeader />}
+      {pathname?.startsWith("/admin") && <DynamicAdminHeader />}
 
       {/* Desktop Submenu */}
       {/* <DynamicDesktopSubmenu userRole={user?.role === "trainee" ? "trainee" : user?.role} /> */}

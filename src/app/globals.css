@@ -1,6 +1,6 @@
-@import url('./../../tailwind.config.css');
-
-@custom-variant dark (&:is(.dark *));
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 
 /* Navigation z-index fixes */
