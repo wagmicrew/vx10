@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
-import { logger } from '@/utils/edge-logger';
 import { format, parseISO, addMinutes, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 
 const prisma = new PrismaClient();
@@ -94,7 +93,7 @@ export async function GET(request) {
       blockedSlots
     );
 
-    logger.info('Available slots calculated', { 
+    console.log('Available slots calculated', { 
       date, 
       lessonId, 
       slotsCount: availableSlots.length 
@@ -102,7 +101,7 @@ export async function GET(request) {
 
     return NextResponse.json(availableSlots);
   } catch (error) {
-    logger.error('Failed to calculate available slots', { error: error.message });
+    console.error('Failed to calculate available slots', { error: error.message });
     return NextResponse.json(
       { error: 'Failed to calculate available slots' },
       { status: 500 }

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
-import { logger } from '@/utils/edge-logger';
 
 const prisma = new PrismaClient();
 
@@ -15,11 +14,11 @@ export async function GET() {
       }
     });
 
-    logger.info('Lessons fetched successfully', { count: lessons.length });
+    console.log('Lessons fetched successfully', { count: lessons.length });
 
     return NextResponse.json(lessons);
   } catch (error) {
-    logger.error('Failed to fetch lessons', { error: error.message });
+    console.error('Failed to fetch lessons', { error: error.message });
     return NextResponse.json(
       { error: 'Failed to fetch lessons' },
       { status: 500 }
@@ -46,11 +45,11 @@ export async function POST(request) {
       }
     });
 
-    logger.info('Lesson created successfully', { lessonId: lesson.id, name });
+    console.log('Lesson created successfully', { lessonId: lesson.id, name });
 
     return NextResponse.json(lesson, { status: 201 });
   } catch (error) {
-    logger.error('Failed to create lesson', { error: error.message });
+    console.error('Failed to create lesson', { error: error.message });
     return NextResponse.json(
       { error: 'Failed to create lesson' },
       { status: 500 }

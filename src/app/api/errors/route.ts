@@ -1,23 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Logger interface type
-interface Logger {
-  error: (message: string, data?: Record<string, unknown>) => void;
-  warn: (message: string, data?: Record<string, unknown>) => void;
-}
-
-// Function to get logger dynamically
-async function getLogger(): Promise<Logger | null> {
-  try {
-    // Use dynamic import for ES modules compatibility
-    const loggerModule = await import('../../../../utils/logger');
-    return loggerModule.logger;
-  } catch (error) {
-    console.error('Failed to load logger in API route:', error);
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const errorData = await request.json();
@@ -31,26 +13,18 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     }
 
-    // Get logger instance
-    const logger = await getLogger();
-
     // Log based on error type
-    if (logger) {
-      switch (errorData.type) {
-        case 'network_error':
-          logger.error('Client Network Error', enrichedError);
-          break;
-        case 'performance_issue':
-          logger.warn('Performance Issue', enrichedError);
-          break;
-        case 'javascript_error':
-        default:
-          logger.error('Client JavaScript Error', enrichedError);
-          break;
-      }
-    } else {
-      // Fallback to console.error if logger not available
-      console.error('Client Error (via API):', enrichedError);
+    switch (errorData.type) {
+      case 'network_error':
+        console.error('Client Network Error', enrichedError);
+        break;
+      case 'performance_issue':
+        console.warn('Performance Issue', enrichedError);
+        break;
+      case 'javascript_error':
+      default:
+        console.error('Client JavaScript Error', enrichedError);
+        break;
     }
 
     // In production, you might want to store errors in database
@@ -70,14 +44,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Failed to process error report:', error);
-    
-    const logger = await getLogger();
-    if (logger) {
-      logger.error('Error processing error report', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    }
+    console.error('Error processing error report', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
 
     return NextResponse.json({ 
       success: false, 
@@ -92,11 +62,10 @@ export async function GET(request: NextRequest) {
   const check = searchParams.get('check');
 
   if (check === 'health') {
-    const logger = await getLogger();
     return NextResponse.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
-      logger: logger ? 'available' : 'unavailable'
+      logger: 'console'
     });
   }
 

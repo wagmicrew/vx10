@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
-import { logger } from '@/utils/edge-logger';
 import { auth } from "@/lib/auth/config";
 import { parseISO } from 'date-fns';
 
@@ -86,7 +85,7 @@ export async function POST(request) {
       }
     });
 
-    logger.info('Booking created successfully', { 
+    console.log('Booking created successfully', { 
       bookingId: booking.id, 
       userId: session.user.id,
       lessonId,
@@ -122,7 +121,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    logger.error('Failed to create booking', { error: error.message });
+    console.error('Failed to create booking', { error: error.message });
     return NextResponse.json(
       { error: 'Failed to create booking' },
       { status: 500 }
@@ -188,7 +187,7 @@ async function createQliroOrder(booking) {
     }
     
   } catch (error) {
-    logger.error('Failed to create Qliro order', { 
+    console.error('Failed to create Qliro order', { 
       bookingId: booking.id, 
       error: error.message 
     });

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
-import { logger } from '@/utils/edge-logger';
 
 const prisma = new PrismaClient();
 
@@ -12,11 +11,11 @@ export async function GET() {
       }
     });
 
-    logger.info('Admin settings fetched successfully', { count: settings.length });
+    console.log('Admin settings fetched successfully', { count: settings.length });
 
     return NextResponse.json(settings);
   } catch (error) {
-    logger.error('Failed to fetch admin settings', { error: error.message });
+    console.error('Failed to fetch admin settings', { error: error.message });
     return NextResponse.json(
       { error: 'Failed to fetch admin settings' },
       { status: 500 }
@@ -52,11 +51,11 @@ export async function POST(request) {
       }
     });
 
-    logger.info('Admin setting updated successfully', { category, key });
+    console.log('Admin setting updated successfully', { category, key });
 
     return NextResponse.json(setting);
   } catch (error) {
-    logger.error('Failed to update admin setting', { error: error.message });
+    console.error('Failed to update admin setting', { error: error.message });
     return NextResponse.json(
       { error: 'Failed to update admin setting' },
       { status: 500 }
