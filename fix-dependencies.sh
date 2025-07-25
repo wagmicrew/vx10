@@ -235,15 +235,14 @@ fix_prisma_issues() {
         log "Generating Prisma client..."
         npx prisma generate
         
-        # Fix Prisma import paths in API routes
+        # Fix Prisma import paths in API routes to use @/generated/prisma alias
         log "Fixing Prisma import paths..."
-        find src/app/api -name "*.js" -exec sed -i 's|from '\''@prisma/client'\''|from '\''../../../generated/prisma'\''|g' {} \;
-        find src/app/api -name "*.js" -exec sed -i 's|from "@prisma/client"|from "../../../generated/prisma"|g' {} \;
-        
-        # Fix specific path for lessons route (different depth)
-        if [[ -f "src/app/api/lessons/route.js" ]]; then
-            sed -i 's|from '\''../../../generated/prisma'\''|from '\''../../generated/prisma'\''|g' src/app/api/lessons/route.js
-        fi
+        find src/app/api -name "*.js" -exec sed -i 's|from '\''@prisma/client'\''|from '\''@/generated/prisma'\''|g' {} \;
+        find src/app/api -name "*.js" -exec sed -i 's|from "@prisma/client"|from "@/generated/prisma"|g' {} \;
+        find src/app/api -name "*.js" -exec sed -i 's|from '\''../../../generated/prisma'\''|from '\''@/generated/prisma'\''|g' {} \;
+        find src/app/api -name "*.js" -exec sed -i 's|from "../../../generated/prisma"|from "@/generated/prisma"|g' {} \;
+        find src/app/api -name "*.js" -exec sed -i 's|from '\''../../generated/prisma'\''|from '\''@/generated/prisma'\''|g' {} \;
+        find src/app/api -name "*.js" -exec sed -i 's|from "../../generated/prisma"|from "@/generated/prisma"|g' {} \;
         
         success "Prisma client generated and imports fixed"
     else

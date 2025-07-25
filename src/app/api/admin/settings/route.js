@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '../../../generated/prisma';
+import { PrismaClient } from '@/generated/prisma';
 import { logger } from '@/utils/edge-logger';
 
 const prisma = new PrismaClient();

@@ -43,17 +43,43 @@ success() {
     echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-# Function to check if running as root
-check_root() {
+# Function to check user privileges and set up user context
+check_user_context() {
     if [[ $EUID -eq 0 ]]; then
-        error "This script should not be run as root. Please run as a regular user with sudo privileges."
-        exit 1
-    fi
-    
-    # Check if user has sudo privileges
-    if ! sudo -n true 2>/dev/null; then
-        error "This script requires sudo privileges. Please ensure your user can run sudo commands."
-        exit 1
+        warning "Running as root. Will create a deployment user for safe operations."
+
+        # Create deployment user if it doesn't exist
+        DEPLOY_USER="vx10deploy"
+        if ! id "$DEPLOY_USER" &>/dev/null; then
+            log "Creating deployment user: $DEPLOY_USER"
+            useradd -m -s /bin/bash "$DEPLOY_USER"
+            usermod -aG sudo "$DEPLOY_USER"
+
+            # Set a temporary password
+            echo "$DEPLOY_USER:vx10deploy123" | chpasswd
+            log "Created user $DEPLOY_USER with password: vx10deploy123"
+        fi
+
+        # Set project ownership to deployment user
+        if [[ -d "$PROJECT_DIR" ]]; then
+            chown -R "$DEPLOY_USER:$DEPLOY_USER" "$PROJECT_DIR"
+        fi
+
+        IS_ROOT=true
+        CURRENT_USER="$DEPLOY_USER"
+
+        log "Running as root - will use deployment user: $DEPLOY_USER for application operations"
+    else
+        # Check if user has sudo privileges
+        if ! sudo -n true 2>/dev/null; then
+            error "This script requires sudo privileges. Please ensure your user can run sudo commands."
+            exit 1
+        fi
+
+        IS_ROOT=false
+        CURRENT_USER="$USER"
+
+        log "Running as user: $CURRENT_USER with sudo privileges"
     fi
 }
 
@@ -73,59 +99,79 @@ detect_ubuntu_version() {
     log "Detected Ubuntu $VERSION_ID"
 }
 
+# Function to execute commands with appropriate user context
+execute_with_user() {
+    local cmd="$1"
+    if [[ $IS_ROOT == true ]]; then
+        su - "$CURRENT_USER" -c "$cmd"
+    else
+        bash -c "$cmd"
+    fi
+}
+
+# Function to execute sudo commands
+execute_sudo() {
+    local cmd="$1"
+    if [[ $IS_ROOT == true ]]; then
+        bash -c "$cmd"
+    else
+        sudo bash -c "$cmd"
+    fi
+}
+
 # Function to update system packages
 update_system() {
     log "Updating system packages..."
-    sudo apt-get update -qq
-    sudo apt-get upgrade -y -qq
+    execute_sudo "apt-get update -qq"
+    execute_sudo "apt-get upgrade -y -qq"
     success "System packages updated"
 }
 
 # Function to install PostgreSQL
 install_postgresql() {
     log "Installing PostgreSQL..."
-    
+
     # Check if PostgreSQL is already installed
     if command -v psql >/dev/null 2>&1; then
         warning "PostgreSQL is already installed"
         return 0
     fi
-    
+
     # Install PostgreSQL and additional packages
-    sudo apt-get install -y postgresql postgresql-contrib postgresql-client
-    
+    execute_sudo "apt-get install -y postgresql postgresql-contrib postgresql-client"
+
     # Start and enable PostgreSQL service
-    sudo systemctl start postgresql
-    sudo systemctl enable postgresql
-    
+    execute_sudo "systemctl start postgresql"
+    execute_sudo "systemctl enable postgresql"
+
     # Wait for PostgreSQL to be ready
     sleep 3
-    
+
     success "PostgreSQL installed and started"
 }
 
 # Function to configure PostgreSQL
 configure_postgresql() {
     log "Configuring PostgreSQL..."
-    
+
     # Set postgres user password (for administrative tasks)
-    sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';" 2>/dev/null || true
-    
+    execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER postgres PASSWORD 'postgres';\\\"\""  2>/dev/null || true
+
     # Create database user
     log "Creating database user: $DB_USER"
-    sudo -u postgres psql -c "DROP USER IF EXISTS $DB_USER;" 2>/dev/null || true
-    sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
-    sudo -u postgres psql -c "ALTER USER $DB_USER CREATEDB;"
-    sudo -u postgres psql -c "ALTER USER $DB_USER WITH SUPERUSER;" # Needed for some Prisma operations
-    
+    execute_sudo "su - postgres -c \"psql -c \\\"DROP USER IF EXISTS $DB_USER;\\\"\""  2>/dev/null || true
+    execute_sudo "su - postgres -c \"psql -c \\\"CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\\\"\""
+    execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER CREATEDB;\\\"\""
+    execute_sudo "su - postgres -c \"psql -c \\\"ALTER USER $DB_USER WITH SUPERUSER;\\\"\""  # Needed for some Prisma operations
+
     # Create database
     log "Creating database: $DB_NAME"
-    sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
-    sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
-    
+    execute_sudo "su - postgres -c \"psql -c \\\"DROP DATABASE IF EXISTS $DB_NAME;\\\"\""  2>/dev/null || true
+    execute_sudo "su - postgres -c \"psql -c \\\"CREATE DATABASE $DB_NAME OWNER $DB_USER;\\\"\""
+
     # Grant all privileges
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
-    
+    execute_sudo "su - postgres -c \"psql -c \\\"GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;\\\"\""
+
     success "PostgreSQL configured with user: $DB_USER and database: $DB_NAME"
 }
 
@@ -150,23 +196,23 @@ configure_pg_access() {
     log "Found PostgreSQL config in: $PG_CONFIG_DIR"
     
     # Backup original files
-    sudo cp "$PG_CONFIG_DIR/postgresql.conf" "$PG_CONFIG_DIR/postgresql.conf.backup" 2>/dev/null || true
-    sudo cp "$PG_CONFIG_DIR/pg_hba.conf" "$PG_CONFIG_DIR/pg_hba.conf.backup" 2>/dev/null || true
-    
+    execute_sudo "cp \"$PG_CONFIG_DIR/postgresql.conf\" \"$PG_CONFIG_DIR/postgresql.conf.backup\"" 2>/dev/null || true
+    execute_sudo "cp \"$PG_CONFIG_DIR/pg_hba.conf\" \"$PG_CONFIG_DIR/pg_hba.conf.backup\"" 2>/dev/null || true
+
     # Configure postgresql.conf
-    sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/" "$PG_CONFIG_DIR/postgresql.conf"
-    sudo sed -i "s/#port = 5432/port = 5432/" "$PG_CONFIG_DIR/postgresql.conf"
-    
+    execute_sudo "sed -i \"s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/\" \"$PG_CONFIG_DIR/postgresql.conf\""
+    execute_sudo "sed -i \"s/#port = 5432/port = 5432/\" \"$PG_CONFIG_DIR/postgresql.conf\""
+
     # Configure pg_hba.conf for local connections
-    sudo sed -i "s/local   all             all                                     peer/local   all             all                                     md5/" "$PG_CONFIG_DIR/pg_hba.conf"
-    
+    execute_sudo "sed -i \"s/local   all             all                                     peer/local   all             all                                     md5/\" \"$PG_CONFIG_DIR/pg_hba.conf\""
+
     # Add specific rule for our user
-    if ! sudo grep -q "$DB_USER" "$PG_CONFIG_DIR/pg_hba.conf"; then
-        echo "local   $DB_NAME        $DB_USER                                md5" | sudo tee -a "$PG_CONFIG_DIR/pg_hba.conf" >/dev/null
+    if ! execute_sudo "grep -q \"$DB_USER\" \"$PG_CONFIG_DIR/pg_hba.conf\""; then
+        execute_sudo "echo \"local   $DB_NAME        $DB_USER                                md5\" >> \"$PG_CONFIG_DIR/pg_hba.conf\""
     fi
-    
+
     # Restart PostgreSQL to apply changes
-    sudo systemctl restart postgresql
+    execute_sudo "systemctl restart postgresql"
     sleep 3
     
     success "PostgreSQL access configured"
@@ -232,27 +278,31 @@ EOF
 # Function to fix file and folder permissions
 fix_permissions() {
     log "Fixing file and folder permissions..."
-    
+
     # Fix ownership of project directory
-    sudo chown -R "$USER:$USER" "$PROJECT_DIR" 2>/dev/null || true
-    
+    if [[ $IS_ROOT == true ]]; then
+        chown -R "$CURRENT_USER:$CURRENT_USER" "$PROJECT_DIR" 2>/dev/null || true
+    else
+        sudo chown -R "$CURRENT_USER:$CURRENT_USER" "$PROJECT_DIR" 2>/dev/null || true
+    fi
+
     # Fix permissions for important directories
     chmod 755 "$PROJECT_DIR" 2>/dev/null || true
     chmod 644 "$ENV_FILE" 2>/dev/null || true
-    
+
     # Fix node_modules permissions if it exists
     if [[ -d "$PROJECT_DIR/node_modules" ]]; then
         find "$PROJECT_DIR/node_modules" -type d -exec chmod 755 {} \; 2>/dev/null || true
         find "$PROJECT_DIR/node_modules" -type f -exec chmod 644 {} \; 2>/dev/null || true
         find "$PROJECT_DIR/node_modules/.bin" -type f -exec chmod 755 {} \; 2>/dev/null || true
     fi
-    
+
     # Fix prisma directory permissions
     if [[ -d "$PROJECT_DIR/prisma" ]]; then
         chmod -R 644 "$PROJECT_DIR/prisma"/* 2>/dev/null || true
         chmod 755 "$PROJECT_DIR/prisma" 2>/dev/null || true
     fi
-    
+
     success "File and folder permissions fixed"
 }
 
@@ -263,8 +313,8 @@ install_dependencies() {
     # Check if Node.js is installed
     if ! command -v node >/dev/null 2>&1; then
         log "Installing Node.js..."
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        execute_sudo "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -"
+        execute_sudo "apt-get install -y nodejs"
     fi
 
     # Check if npm is available
@@ -277,13 +327,13 @@ install_dependencies() {
     log "npm version: $(npm --version)"
 
     # Clear npm cache
-    npm cache clean --force 2>/dev/null || true
+    execute_with_user "cd '$PROJECT_DIR' && npm cache clean --force" 2>/dev/null || true
 
     # Install dependencies
     if [[ -f "$PROJECT_DIR/package-lock.json" ]]; then
-        npm ci
+        execute_with_user "cd '$PROJECT_DIR' && npm ci"
     else
-        npm install
+        execute_with_user "cd '$PROJECT_DIR' && npm install"
     fi
 
     success "Dependencies installed"
@@ -295,16 +345,16 @@ setup_prisma() {
 
     # Generate Prisma client
     log "Generating Prisma client..."
-    npm run prisma:generate
+    execute_with_user "cd '$PROJECT_DIR' && npm run prisma:generate"
 
     # Push schema to database (for development)
     log "Pushing schema to database..."
-    npm run prisma:push --accept-data-loss 2>/dev/null || {
+    execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --accept-data-loss" 2>/dev/null || {
         warning "Schema push failed, trying with force reset..."
-        npm run prisma:push --force-reset 2>/dev/null || {
+        execute_with_user "cd '$PROJECT_DIR' && npm run prisma:push --force-reset" 2>/dev/null || {
             error "Failed to push schema. Trying migration approach..."
             # Try migration approach
-            npm run prisma:migrate dev --name init 2>/dev/null || {
+            execute_with_user "cd '$PROJECT_DIR' && npm run prisma:migrate dev --name init" 2>/dev/null || {
                 error "Migration also failed. Manual intervention may be required."
                 return 1
             }
