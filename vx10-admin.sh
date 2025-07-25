@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# VX10 Admin Script for Ubuntu
-# Author: VX10 Team
-# Description: Comprehensive admin script for managing VX10 deployment
+# Din Trafikskola HLM Admin Script for Ubuntu
+# Author: Din Trafikskola HLM Team
+# Description: Comprehensive admin script for managing Din Trafikskola HLM deployment
 
 set -e
 
@@ -16,8 +16,8 @@ MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Configuration
-DEFAULT_PROJECT_DIR="/var/www/vx10"
-LOG_DIR="/var/log/vx10"
+DEFAULT_PROJECT_DIR="/var/www/din-trafikskola-hlm"
+LOG_DIR="/var/log/din-trafikskola-hlm"
 
 # Logging functions
 log() {
@@ -70,15 +70,15 @@ setup_user_context() {
     if [[ $EUID -eq 0 ]]; then
         warning "Running as root. Will use vx10 user context."
         
-        # Check if vx10 user exists, create if not
-        if ! id "vx10" &>/dev/null; then
-            log "Creating vx10 user..."
-            useradd -m -s /bin/bash vx10
-            usermod -aG sudo vx10
+        # Check if trafikskola user exists, create if not
+        if ! id "trafikskola" &>/dev/null; then
+            log "Creating trafikskola user..."
+            useradd -m -s /bin/bash trafikskola
+            usermod -aG sudo trafikskola
         fi
         
-        DEPLOY_USER="vx10"
-        DEPLOY_HOME="/home/vx10"
+        DEPLOY_USER="trafikskola"
+        DEPLOY_HOME="/home/trafikskola"
         IS_ROOT=true
         
         # Check if Node.js is available system-wide first
@@ -89,11 +89,11 @@ setup_user_context() {
             warning "You can install it with: curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs"
         fi
         
-        # Check if PM2 is available for vx10 user
-        if sudo -u vx10 bash -c 'command -v pm2' &>/dev/null; then
-            log "PM2 already available for vx10 user"
+        # Check if PM2 is available for trafikskola user
+        if sudo -u trafikskola bash -c 'command -v pm2' &>/dev/null; then
+            log "PM2 already available for trafikskola user"
         else
-            log "PM2 not found for vx10 user. Will install if needed."
+            log "PM2 not found for trafikskola user. Will install if needed."
         fi
         
     else
@@ -130,9 +130,9 @@ setup_user_context() {
                 fi
             done
             
-            # Ensure vx10 user is in www-data group
-            if id "vx10" &>/dev/null; then
-                sudo usermod -aG www-data vx10 2>/dev/null || true
+            # Ensure trafikskola user is in www-data group
+            if id "trafikskola" &>/dev/null; then
+                sudo usermod -aG www-data trafikskola 2>/dev/null || true
             fi
             
             # Wait for background processes to complete
@@ -332,9 +332,9 @@ setup_database() {
             sudo systemctl enable postgresql
         fi
         log "Creating database and user..."
-        sudo -u postgres psql -c "CREATE DATABASE vx10db;"
-        sudo -u postgres psql -c "CREATE USER vx10user WITH ENCRYPTED PASSWORD 'vx10pass';"
-        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE vx10db TO vx10user;"
+        sudo -u postgres psql -c "CREATE DATABASE trafikskoladb;"
+        sudo -u postgres psql -c "CREATE USER trafikskolauser WITH ENCRYPTED PASSWORD 'trafikskolapass';"
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE trafikskoladb TO trafikskolauser;"
         success "Local PostgreSQL setup completed"
     elif [[ "$db_choice" == "2" ]]; then
         info "Configuring Supabase..."
@@ -856,7 +856,7 @@ github_menu() {
     while true; do
         clear
         echo -e "${CYAN}================================${NC}"
-        echo -e "${CYAN}     VX10 GitHub Management     ${NC}"
+        echo -e "${CYAN}  Din Trafikskola HLM GitHub    ${NC}"
         echo -e "${CYAN}================================${NC}"
         echo
         echo "1) Pull latest changes"
@@ -1062,7 +1062,7 @@ node_menu() {
     while true; do
         clear
         echo -e "${GREEN}================================${NC}"
-        echo -e "${GREEN}     VX10 Node.js Management    ${NC}"
+        echo -e "${GREEN} Din Trafikskola HLM Node.js   ${NC}"
         echo -e "${GREEN}================================${NC}"
         echo
         echo "1) Check project health"
@@ -1081,14 +1081,14 @@ node_menu() {
         read -p "Select option [1-12]: " choice
         
         case $choice in
-            1) node_check_project_health ;;
+            1) diagnose_and_fix ;;
             2) node_install_deps ;;
             3) node_update_deps ;;
             4) node_audit_deps ;;
             5) node_clean_cache ;;
             6) node_clean_reinstall ;;
             7) node_build ;;
-            8) node_dev ;;
+            8) node_start_dev ;;
             9) node_test ;;
             10) node_fix_permissions ;;
             11) node_version ;;
@@ -1184,7 +1184,7 @@ pm2_menu() {
     while true; do
         clear
         echo -e "${MAGENTA}================================${NC}"
-        echo -e "${MAGENTA}      VX10 PM2 Management       ${NC}"
+        echo -e "${MAGENTA}   Din Trafikskola HLM PM2     ${NC}"
         echo -e "${MAGENTA}================================${NC}"
         echo
         echo "1) Show status"
@@ -1266,7 +1266,7 @@ nginx_menu() {
     while true; do
         clear
         echo -e "${BLUE}================================${NC}"
-        echo -e "${BLUE}     VX10 Nginx Management      ${NC}"
+        echo -e "${BLUE}  Din Trafikskola HLM Nginx    ${NC}"
         echo -e "${BLUE}================================${NC}"
         echo
         echo "1) Show status"
@@ -1324,10 +1324,11 @@ db_restart() {
 
 db_connect() {
     log "Connecting to PostgreSQL..."
-    read -p "Enter database name (default: vx10db): " db_name
-    db_name=${db_name:-vx10db}
-    read -p "Enter username (default: vx10user): " db_user
-    db_user=${db_user:-vx10user}
+    read -p "Enter database name (default: trafikskoladb): " db_name
+    db_name=${db_name:-trafikskoladb}
+    read -p "Enter username (default: trafikskolauser): " db_user
+    db_user=${db_user:-trafikskolauser}
+${db_user:-trafikskolauser}
     
     psql -h localhost -U "$db_user" -d "$db_name"
     read -p "Press Enter to continue..."
@@ -1340,7 +1341,7 @@ db_backup() {
     read -p "Enter username (default: vx10user): " db_user
     db_user=${db_user:-vx10user}
     
-    local backup_file="vx10_backup_$(date +%Y%m%d_%H%M%S).sql"
+    local backup_file="trafikskola_backup_$(date +%Y%m%d_%H%M%S).sql"
     pg_dump -h localhost -U "$db_user" -d "$db_name" > "$backup_file"
     success "Backup created: $backup_file"
     read -p "Press Enter to continue..."
@@ -1359,7 +1360,7 @@ database_menu() {
     while true; do
         clear
         echo -e "${YELLOW}================================${NC}"
-        echo -e "${YELLOW}    VX10 Database Management    ${NC}"
+        echo -e "${YELLOW} Din Trafikskola HLM Database  ${NC}"
         echo -e "${YELLOW}================================${NC}"
         echo
         echo "1) Show PostgreSQL status"
@@ -1394,7 +1395,7 @@ utilities_menu() {
     while true; do
         clear
         echo -e "${YELLOW}================================${NC}"
-        echo -e "${YELLOW}       VX10 Utilities           ${NC}"
+        echo -e "${YELLOW}  Din Trafikskola HLM Utils    ${NC}"
         echo -e "${YELLOW}================================${NC}"
         echo
         echo "1) Clear cache"
@@ -1462,9 +1463,9 @@ system_info() {
 # Main menu
 main_menu() {
     while true; do
-        cls 2>/dev/null || clear
+        clear 2>/dev/null || cls 2>/dev/null
         echo "========================================="
-        echo "         VX10 Admin Panel (Windows)      "
+        echo "    Din Trafikskola HLM Admin Panel     "
         echo "========================================="
         echo " 1) GitHub Management         - Manage code & branches"
         echo " 2) Node.js Management        - Dependencies & builds"
@@ -1490,7 +1491,7 @@ main_menu() {
             8) setup_project_from_scratch ;;
             9)
                 echo "========================================="
-                echo " Thank you for using VX10 Admin Panel!   "
+                echo " Thank you for using Din Trafikskola HLM! "
                 echo "========================================="
                 exit 0
                 ;;
@@ -1503,35 +1504,10 @@ main_menu() {
 }
 
 
-# Add a quick setup check function
-check_prerequisites() {
-    local missing_tools=()
-    if ! command_exists git; then
-        missing_tools+=("git")
-    fi
-    if ! command_exists node; then
-        missing_tools+=("nodejs")
-    fi
-    if ! command_exists npm; then
-        missing_tools+=("npm")
-    fi
-    if ! command_exists pm2; then
-        missing_tools+=("pm2")
-    fi
-    if ! command_exists psql; then
-        missing_tools+=("postgresql-client")
-    fi
-    if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        error "Missing prerequisites: ${missing_tools[*]}"
-        exit 1
-    else
-        log "All prerequisites are available."
-    fi
-}
 
 # Main execution
 main() {
-    log "Starting VX10 Admin Panel..."
+    log "Starting Din Trafikskola HLM Admin Panel..."
     setup_user_context
     check_prerequisites
     main_menu
@@ -1617,420 +1593,65 @@ logs_clear() {
 
 
 
-# Add a quick setup check function
+# Simplified prerequisites check function
 check_prerequisites() {
     local missing_tools=()
-    
+    local optional_tools=()
+
+    # Essential tools
     if ! command_exists git; then
         missing_tools+=("git")
     fi
-    
     if ! command_exists node; then
         missing_tools+=("nodejs")
     fi
-    
     if ! command_exists npm; then
         missing_tools+=("npm")
     fi
-    
     if ! command_exists curl; then
         missing_tools+=("curl")
     fi
-    
     if ! command_exists wget; then
         missing_tools+=("wget")
     fi
-    
-    if ! command_exists unzip; then
-        missing_tools+=("unzip")
-    fi
-    
-    if ! command_exists jq; then
-        missing_tools+=("jq")
-    fi
-    
+
+    # Optional tools
     if ! command_exists pm2; then
-        missing_tools+=("pm2")
+        optional_tools+=("pm2 (install with npm)")
     fi
-    
     if ! command_exists psql; then
-        missing_tools+=("postgresql-client")
+        optional_tools+=("postgresql-client")
     fi
-    
     if ! command_exists nginx; then
-        missing_tools+=("nginx")
+        optional_tools+=("nginx")
     fi
-    
-    if ! command_exists redis-server; then
-        missing_tools+=("redis-server")
-    fi
-    
-    if ! command_exists certbot; then
-        missing_tools+=("certbot")
-    fi
-    
-    if ! command_exists python3; then
-        missing_tools+=("python3")
-    fi
-    
-    if ! command_exists python3-venv; then
-        missing_tools+=("python3-venv")
-    fi
-    
-    if ! command_exists python3-pip; then
-        missing_tools+=("python3-pip")
-    fi
-    
-    if ! command_exists pip3; then
-        missing_tools+=("pip3")
-    fi
-    
-    if ! command_exists pipenv; then
-        missing_tools+=("pipenv")
-    fi
-    
     if ! command_exists docker; then
-        missing_tools+=("docker")
+        optional_tools+=("docker/docker-compose")
     fi
-    
-    if ! command_exists docker-compose; then
-        missing_tools+=("docker-compose")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
 
+    # Report missing essential tools
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        error "Missing essential tools: ${missing_tools[*]}"
+        read -p "Install missing tools now? (y/N): " install_confirm
+        if [[ "$install_confirm" =~ ^[Yy]$ ]]; then
+            log "Installing missing tools..."
+            sudo apt-get update -qq
+            sudo apt-get install -y "${missing_tools[@]}"
+        else
+            warning "Some features may not work without these tools."
+            read -p "Continue anyway? (y/N): " confirm_cont
+            [[ "$confirm_cont" =~ ^[Yy]$ ]] || exit 1
+        fi
+    else
+        log "All essential prerequisites are available."
+    fi
 
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
-    
-    if ! command_exists docker-ce; then
-        missing_tools+=("docker-ce")
-    fi
-    
-    if ! command_exists docker-ce-cli; then
-        missing_tools+=("docker-ce-cli")
-    fi
-    
-    if ! command_exists docker-compose-plugin; then
-        missing_tools+=("docker-compose-plugin")
-    fi
-    
-    if ! command_exists docker.io; then
-        missing_tools+=("docker.io")
-    fi
+    # Report missing optional tools
+    if [[ ${#optional_tools[@]} -gt 0 ]]; then
+        warning "Missing optional tools: ${optional_tools[*]}"
+        echo "These tools are recommended but not necessary for basic functionality."
+    fi
+}
     
     if ! command_exists docker-ce; then
         missing_tools+=("docker-ce")
